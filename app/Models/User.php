@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
+
+/**
+ * Class User
+ * Represents a system user: student, admin, or organization contact.
+ * Handles authentication and role management.
+ */
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable, HasRoles;
+
+    /**
+     * Organizations this user belongs to (as staff/admin).
+     */
+    public function organizations()
+    {
+        return $this->belongsToMany(Organization::class, 'organization_user')->withPivot('role')->withTimestamps();
+    }
+
+    /**
+     * Activities performed by the user.
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * Notifications for the user.
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Messages sent by the user.
+     */
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    /**
+     * The attributes that are mass assignable.
+     * name: Full name of the user
+     * email: Email address
+     * password: Hashed password
+     * role: User role (admin, organization, student)
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    /**
+     * Relationship: Each student user has one student record.
+     */
+    public function student()
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    /**
+     * Relationship: Each organization user has one organization profile.
+     */
+    public function organizationProfile()
+    {
+        return $this->hasOne(Organization::class);
+    }
+}

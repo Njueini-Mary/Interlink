@@ -1,0 +1,74 @@
+.dashboard-modern {font-family: 'Segoe UI', Arial, sans-serif; color: #22223b;}
+.dashboard-header {font-size: 2.2rem; font-weight: bold; color: #22223b; margin-bottom: 2.5rem;}
+.dashboard-stats {display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 2.5rem;}
+.dashboard-card {background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px rgba(0,0,0,0.07); padding: 2rem 2rem 1.5rem 2rem; flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; align-items: flex-start; transition: box-shadow 0.2s;}
+.dashboard-card-title {font-size: 1.1rem; color: #6b7280; margin-bottom: 0.5rem;}
+.dashboard-card-value {font-size: 2.2rem; font-weight: bold; margin-bottom: 0.5rem;}
+.dashboard-card-sub {font-size: 1rem; color: #6b7280; margin-top: 0.5rem;}
+.gradient-blue {background: linear-gradient(135deg, #e0e7ff 0%, #6366f1 100%); color: #22223b;}
+.gradient-green {background: linear-gradient(135deg, #d1fae5 0%, #10b981 100%); color: #22223b;}
+.gradient-purple {background: linear-gradient(135deg, #ede9fe 0%, #a21caf 100%); color: #22223b;}
+.gradient-orange {background: linear-gradient(135deg, #ffedd5 0%, #f59e42 100%); color: #22223b;}
+.dashboard-section {margin-bottom: 2.5rem;}
+.dashboard-section h3 {font-size: 1.3rem; font-weight: 600; margin-bottom: 1.2rem; color: #3730a3;}
+.dashboard-list {display: flex; flex-direction: column; gap: 1.2rem;}
+.dashboard-list-item {background: #fff; border-radius: 0.75rem; box-shadow: 0 1px 6px rgba(0,0,0,0.04); padding: 1.2rem 1.5rem; display: flex; align-items: center; gap: 1.2rem;}
+.user-avatar {width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #6366f1; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;}
+.user-name {font-weight: 600; font-size: 1.1rem;}
+.user-meta {font-size: 0.95rem; color: #6b7280;}
+.activity-desc {font-weight: 500; color: #22223b;}
+.project-title {font-weight: 600; font-size: 1.1rem; color: #a21caf;}
+.progress-bar {background: #e5e7eb; border-radius: 1rem; height: 0.5rem; width: 100%; margin: 0.7rem 0;}
+.progress-fill {height: 100%; border-radius: 1rem;}
+.progress-fill.blue {background: #6366f1;}
+.progress-fill.yellow {background: #f59e42;}
+.badge {padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.85rem; font-weight: 500; display: inline-block;}
+.badge-green {background: #d1fae5; color: #065f46;}
+.badge-yellow {background: #fef3c7; color: #92400e;}
+.badge-blue {background: #e0e7ff; color: #3730a3;}
+.badge-gray {background: #f3f4f6; color: #6b7280;}
+.task-title {font-weight: 600; font-size: 1.05rem;}
+.task-title.done {text-decoration: line-through; color: #6b7280;}
+input[type="checkbox"] {accent-color: #6366f1; width: 1.1rem; height: 1.1rem;}
+body {
+    background: #f3f4f6;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #22223b;
+    margin: 0;
+    padding: 0;
+}
+.dashboard-header {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #22223b;
+    margin-bottom: 2rem;
+}
+.dashboard-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.dashboard-card {
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 1.5rem;
+    flex: 1 1 200px;
+    min-width: 200px;
+}
+.dashboard-card-title {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+.dashboard-card-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2563eb;
+}
+.dashboard-card-sub {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}

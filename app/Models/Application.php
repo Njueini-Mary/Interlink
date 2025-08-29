@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * Class Application
+ * Represents a student's application to an opportunity (internship/attachment).
+ * Stores application details, status, and relationships.
+ */
+class Application extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     * opportunity_id: Foreign key to Opportunity
+     * student_id: Foreign key to Student
+     * cover_letter: Application letter
+     * status: submitted/accepted/rejected
+     */
+    protected $fillable = [
+        'opportunity_id',
+        'student_id',
+        'cover_letter',
+        'status',
+    ];
+
+    /**
+     * Relationship: Application belongs to an opportunity.
+     */
+    public function opportunity()
+    {
+        return $this->belongsTo(Opportunity::class);
+    }
+
+    /**
+     * Relationship: Application belongs to a student.
+     */
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
+}
