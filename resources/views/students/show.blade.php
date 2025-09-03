@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $freelancer->name }} | Freelancer Profile</title>
+    <title>{{ $student->name }} | Student Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
@@ -14,78 +14,83 @@
     <div class="container py-5">
         <div class="row mb-4">
             <div class="col-lg-10 mx-auto">
-                <div class="card shadow-sm border-0 rounded-3">
-                    <div class="card-body p-5">
-                        <div class="d-flex align-items-center mb-4">
-                            <div class="me-4 position-relative">
-                                <img src="{{ $freelancer->profile_photo ? asset('storage/' . $freelancer->profile_photo) : asset('images/default-avatar.png') }}"
-                                     class="rounded-circle object-fit-cover" width="120" height="120" alt="{{ $freelancer->name }}">
-                                @if($freelancer->is_online)
-                                    <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-2" style="width:18px;height:18px;"></span>
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                    <div class="row g-0">
+                        <div class="col-md-4 bg-primary text-white d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="position-relative mb-3">
+                                <img src="{{ $student->profile_photo ? asset('storage/' . $student->profile_photo) : asset('images/default-avatar.png') }}"
+                                     class="rounded-circle border border-4 border-white shadow object-fit-cover" width="140" height="140" alt="{{ $student->name }}">
+                                @if($student->is_online)
+                                    <span class="position-absolute bottom-0 end-0 translate-middle p-2 bg-success border border-light rounded-circle" style="width:20px;height:20px;"></span>
                                 @endif
                             </div>
-                            <div>
-                                <h2 class="fw-bold mb-1">{{ $freelancer->name }}</h2>
-                                <p class="text-muted mb-2">{{ $freelancer->title }}</p>
-                                <div class="d-flex align-items-center">
-                                    <div class="text-warning me-2">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            @if($i <= round($freelancer->rating))
-                                                <i class="fas fa-star"></i>
-                                            @else
-                                                <i class="far fa-star"></i>
-                                            @endif
-                                        @endfor
-                                    </div>
-                                    <span class="text-muted">{{ number_format($freelancer->rating, 1) }} ({{ $freelancer->reviews_count }} reviews)</span>
+                            <h2 class="fw-bold mb-1">{{ $student->name }}</h2>
+                            <p class="mb-2"><i class="fas fa-graduation-cap me-1"></i> {{ $student->academic_field }}</p>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="text-warning me-2">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= round($student->rating))
+                                            <i class="fas fa-star"></i>
+                                        @else
+                                            <i class="far fa-star"></i>
+                                        @endif
+                                    @endfor
                                 </div>
+                                <span>{{ number_format($student->rating, 1) }} <small>({{ $student->reviews_count }} reviews)</small></span>
+                            </div>
+                            <div class="mb-2">
+                                @foreach($student->skills as $skill)
+                                    <span class="badge bg-light text-primary border border-primary me-1 mb-1">{{ $skill->name }}</span>
+                                @endforeach
+                            </div>
+                            <div class="mt-3">
+                                <a href="{{ route('messages.create', ['student_id' => $student->id]) }}" class="btn btn-light btn-sm shadow-sm">
+                                    <i class="fas fa-envelope me-1"></i> Contact
+                                </a>
                             </div>
                         </div>
-
-                        <div class="mb-4">
-                            <h5 class="fw-bold">Bio</h5>
-                            <p class="text-muted">{{ $freelancer->bio }}</p>
-                        </div>
-
-                        <div class="mb-4">
-                            <h5 class="fw-bold">Skills</h5>
-                            @foreach($freelancer->skills as $skill)
-                                <span class="badge bg-light text-dark me-2 mb-2">{{ $skill->name }}</span>
-                            @endforeach
-                        </div>
-
-                        <div class="mb-4">
-                            <h5 class="fw-bold">Hourly Rate</h5>
-                            <p class="text-primary fw-bold fs-5">Kshs{{ number_format($freelancer->hourly_rate, 2) }}/hr</p>
-                        </div>
-
-                        @if($freelancer->projects->count())
+                        <div class="col-md-8 p-5">
                             <div class="mb-4">
-                                <h5 class="fw-bold">Portfolio</h5>
+                                <h4 class="fw-bold mb-3"><i class="fas fa-user"></i> Bio</h4>
+                                <p class="text-muted">{{ $student->bio }}</p>
+                            </div>
+                            <div class="mb-4">
+                                <h4 class="fw-bold mb-3"><i class="fas fa-university"></i> Academic Details</h4>
                                 <div class="row g-3">
-                                    @foreach($freelancer->projects as $project)
-                                        <div class="col-md-6 col-lg-4">
-                                            <div class="card shadow-sm border-0 h-100">
-                                                <img src="{{ $project->thumbnail ? asset('storage/' . $project->thumbnail) : asset('images/placeholder.png') }}"
-                                                     class="card-img-top" alt="{{ $project->title }}">
-                                                <div class="card-body">
-                                                    <h6 class="fw-bold">{{ $project->title }}</h6>
-                                                    <p class="text-muted small">{{ Str::limit($project->description, 80) }}</p>
-                                                </div>
-                                            </div>
+                                    <div class="col-sm-6">
+                                        <div class="bg-light rounded-3 p-3 mb-2">
+                                            <strong>University:</strong> {{ $student->university ?? '-' }}
                                         </div>
-                                    @endforeach
+                                        <div class="bg-light rounded-3 p-3 mb-2">
+                                            <strong>Course:</strong> {{ $student->course ?? '-' }}
+                                        </div>
+                                        <div class="bg-light rounded-3 p-3 mb-2">
+                                            <strong>Year:</strong> {{ $student->year ?? '-' }}
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="bg-light rounded-3 p-3 mb-2">
+                                            <strong>Academic Field:</strong> {{ $student->academic_field ?? '-' }}
+                                        </div>
+                                        <div class="bg-light rounded-3 p-3 mb-2">
+                                            <strong>Available:</strong> <span class="badge {{ $student->is_available ? 'bg-success' : 'bg-secondary' }}">{{ $student->is_available ? 'Yes' : 'No' }}</span>
+                                        </div>
+                                        <div class="bg-light rounded-3 p-3 mb-2">
+                                            <strong>Resume:</strong>
+                                            @if($student->resume)
+                                                <a href="{{ asset('storage/' . $student->resume) }}" target="_blank" class="btn btn-outline-primary btn-sm ms-2"><i class="fas fa-file-pdf"></i> View Resume</a>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        @endif
-
-                        <div class="text-center mt-5">
-                            <a href="{{ route('freelancers.index') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Listings
-                            </a>
-                            <a href="{{ route('messages.create', ['freelancer_id' => $freelancer->id]) }}" class="btn btn-primary ms-2">
-                                <i class="fas fa-envelope me-1"></i> Contact {{ $freelancer->name }}
-                            </a>
+                            <div class="text-end mt-5">
+                                <a href="{{ route('students.index') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-arrow-left me-1"></i> Back to Listings
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

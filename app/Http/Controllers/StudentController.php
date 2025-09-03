@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Student;
+use App\Models\Category;
+use Illuminate\Http\Request;
+
+class StudentController extends Controller
+{
+    // List all students
+    public function index()
+    {
+    $students = Student::with('user')->paginate(10);
+        $categories = Category::all();
+        // Get top 6 categories with most students
+        $popularCategories = Category::withCount('students')->orderByDesc('students_count')->take(6)->get();
+        // Add fallback icon if not present (for demo)
+        foreach ($popularCategories as $cat) {
+            if (!isset($cat->icon)) {
+                $cat->icon = 'graduation-cap'; // fallback FontAwesome icon
+            }
+        }
+        return view('students.index', compact('students', 'categories', 'popularCategories'));
+    }
+
+    // Show a single student
+    public function show($id)
+    {
+        $student = Student::with('user')->findOrFail($id);
+        return view('students.show', compact('student'));
+    }
+}

@@ -145,7 +145,7 @@
                     <div class="d-flex justify-content-between mb-3">
                         <span
                             class="badge bg-info mb-2">Internship</span>
-                        <span class="text-muted small">{{ $job->created_at->diffForHumans() }}</span>
+                        <span class="text-muted small">{{ $opportunity->created_at->diffForHumans() }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title mb-0">{{ $opportunity->title }}</h5>
@@ -302,7 +302,7 @@
         <!-- Pagination -->
         <div class="row mt-5">
             <div class="col-12 d-flex justify-content-center">
-                {{ $clients->appends(request()->query())->links() }}
+                {{ $organizations->appends(request()->query())->links('pagination::bootstrap-5') }}
             </div>
         </div>
     </div>

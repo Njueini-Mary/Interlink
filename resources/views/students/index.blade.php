@@ -66,7 +66,7 @@
                 <div class="row g-3">
                     @foreach($popularCategories as $category)
                         <div class="col-md-4 col-lg-3">
-                            <a href="{{ route('students.search', ['category' => $category->id]) }}" class="text-decoration-none">
+                            <a href="{{ route('students.index', ['category' => $category->id]) }}" class="text-decoration-none">
                                 <div class="card h-100 shadow-sm border-0 hover-lift">
                                     <div class="card-body p-4 text-center">
                                         <div class="mb-3">
@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <!-- Available Freelancers -->
+        <!-- Available Students -->
         <div class="row mb-4">
             <div class="col-12 d-flex justify-content-between align-items-center">
                 <h2 class="fw-bold mb-0">Available Students</h2>
@@ -169,7 +169,7 @@
         <!-- Pagination -->
         <div class="row mt-5">
             <div class="col-12 d-flex justify-content-center">
-                {{ $freelancers->appends(request()->query())->links() }}
+                {{ $students->appends(request()->query())->links('pagination::bootstrap-5') }}
             </div>
         </div>
         

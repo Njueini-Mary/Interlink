@@ -15,12 +15,15 @@ class ProfileController extends Controller
      */
     public function showUpdateProfileForm(Request $request)
     {
+
         $categories = [];
-        $allSkills = collect(); // new collection for skills
-        if ($request->user()->hasRole('freelancer')) {
-            // Fetch all categories and skills from DB.
+        $allSkills = collect();
+        $user = $request->user();
+        if ($user->role === 'student') {
             $categories = \App\Models\Category::all();
             $allSkills = Skill::all();
+        } elseif ($user->role === 'organization') {
+            // Optionally fetch categories/skills for organizations if needed
         }
 
         return view('profile.update-profile-information-form', [
@@ -46,73 +49,83 @@ class ProfileController extends Controller
         $user->update($userData);
 
         // Role-specific updates.
-        if ($user->hasRole('freelancer')) {
-            $request->validate([
-                'name'            => ['required', 'string', 'max:255'],
-                'email'           => ['required', 'string', 'email', 'max:255'],
-                'title'         => ['required', 'string'],
-                'bio'           => ['required', 'string'],
-                'hourly_rate'   => ['required', 'numeric'],
-                'profile_photo' => ['nullable', 'image', 'max:2048'],
-                'categories'    => ['nullable', 'array'],
-                // We'll accept both an array of existing skills and an optional new_skills string.
-                'existing_skills' => ['nullable', 'array'],
-                'new_skills'      => ['nullable', 'string'],
-            ]);
+        try {
+            if ($user->role === 'student') {
+                $request->validate([
+                    'name'            => ['required', 'string', 'max:255'],
+                    'email'           => ['required', 'string', 'email', 'max:255'],
+                    'academic_field'  => ['required', 'string'],
+                    'bio'             => ['required', 'string'],
+                    'profile_photo'   => ['nullable', 'image', 'max:2048'],
+                    'university'      => ['nullable', 'string'],
+                    'course'          => ['nullable', 'string'],
+                    'year'            => ['nullable', 'string'],
+                    'resume'          => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+                    'is_available'    => ['nullable'],
+                    'categories'      => ['nullable', 'array'],
+                    'existing_skills' => ['nullable', 'array'],
+                    'new_skills'      => ['nullable', 'string'],
+                ]);
 
-            $freelancer = $user->freelancer;
-            $freelancerData = $request->only(['title', 'bio', 'hourly_rate']);
-            $freelancerData['is_online'] = $request->has('is_online');
+                $student = $user->student;
+                $studentData = $request->only([
+                    'academic_field', 'bio', 'university', 'course', 'year'
+                ]);
+                $studentData['is_available'] = $request->has('is_available');
 
-            if ($request->hasFile('profile_photo')) {
-                $freelancerData['profile_photo'] = $request->file('profile_photo')->store('freelancer_photos', 'public');
-            }
-            $freelancer->update($freelancerData);
-
-            // Handle categories if provided.
-            if ($request->filled('categories')) {
-                $freelancer->categories()->sync($request->input('categories'));
-            }
-
-            // Handle skills.
-            // 1. Get existing skills selected.
-            $existingSkillIds = $request->input('existing_skills', []);
-
-            // 2. Process new skills if provided.
-            $newSkillsInput = $request->input('new_skills', '');
-            $newSkillIds = [];
-            if (!empty($newSkillsInput)) {
-                // Split by comma and trim.
-                $newSkillNames = array_filter(array_map('trim', explode(',', $newSkillsInput)));
-                foreach ($newSkillNames as $skillName) {
-                    // Check if the skill exists.
-                    $skill = Skill::firstOrCreate(['name' => $skillName]);
-                    $newSkillIds[] = $skill->id;
+                if ($request->hasFile('profile_photo')) {
+                    $studentData['profile_photo'] = $request->file('profile_photo')->store('student_photos', 'public');
                 }
+                if ($request->hasFile('resume')) {
+                    $studentData['resume'] = $request->file('resume')->store('student_resumes', 'public');
+                }
+                $student->update($studentData);
+
+                // Handle categories if provided.
+                if ($request->filled('categories')) {
+                    $student->categories()->sync($request->input('categories'));
+                }
+
+                // Handle skills.
+                $existingSkillIds = $request->input('existing_skills', []);
+                $newSkillsInput = $request->input('new_skills', '');
+                $newSkillIds = [];
+                if (!empty($newSkillsInput)) {
+                    $newSkillNames = array_filter(array_map('trim', explode(',', $newSkillsInput)));
+                    foreach ($newSkillNames as $skillName) {
+                        $skill = Skill::firstOrCreate(['name' => $skillName]);
+                        $newSkillIds[] = $skill->id;
+                    }
+                }
+                $allSkillIds = array_unique(array_merge($existingSkillIds, $newSkillIds));
+                $student->skills()->sync($allSkillIds);
+
+            } elseif ($user->role === 'organization') {
+                $request->validate([
+                    'organization_name'    => ['required', 'string'],
+                    'organization_profile' => ['required', 'string'],
+                    'location'             => ['required', 'string'],
+                    'company_logo'         => ['nullable', 'image', 'max:2048'],
+                ]);
+
+                $organization = $user->organizationProfile;
+                $orgData = [
+                    'name'        => $request->input('organization_name'),
+                    'description' => $request->input('organization_profile'),
+                    'location'    => $request->input('location'),
+                ];
+                if ($request->hasFile('company_logo')) {
+                    $orgData['logo'] = $request->file('company_logo')->store('organization_logos', 'public');
+                }
+                $organization->update($orgData);
             }
 
-            // Merge existing and new skill ids and sync.
-            $allSkillIds = array_unique(array_merge($existingSkillIds, $newSkillIds));
-            $freelancer->skills()->sync($allSkillIds);
+            // You can add admin or other role logic here if needed
 
-        } elseif ($user->hasRole('client')) {
-            // Validate client-specific fields.
-            $request->validate([
-                'company_name'    => ['required', 'string'],
-                'company_profile' => ['required', 'string'],
-                'location'        => ['required', 'string'],
-                'company_logo'    => ['nullable', 'image', 'max:2048'],
-            ]);
-
-            $client = $user->client;
-            $clientData = $request->only(['company_name', 'company_profile', 'location']);
-            if ($request->hasFile('company_logo')) {
-                $clientData['company_logo'] = $request->file('company_logo')->store('company_logos', 'public');
-            }
-            $client->update($clientData);
+            return Redirect::route('profile.update.form')->with('success', 'Profile updated successfully!');
+        } catch (\Exception $e) {
+            return Redirect::route('profile.update.form')->with('error', 'Profile update failed: ' . $e->getMessage());
         }
-
-        return Redirect::route('profile.update.form')->with('status', 'profile-updated');
     }
 
     /**

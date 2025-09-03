@@ -17,12 +17,19 @@ class OrganizationController extends Controller
         $organizations = Organization::paginate();
         $categories = Category::all();
         $opportunities = Opportunity::all();
+        // Get top 6 categories with most opportunities
+        $popularCategories = Category::withCount('opportunities')->orderByDesc('opportunities_count')->take(6)->get();
+        foreach ($popularCategories as $cat) {
+            if (!isset($cat->icon)) {
+                $cat->icon = 'building'; // fallback FontAwesome icon
+            }
+        }
 
         foreach ($organizations as $organization) {
             $organization->profile_link = route('organizations.show', $organization->id);
         }
 
-        return view('organizations.index', compact('categories', 'opportunities', 'organizations'));
+    return view('organizations.index', compact('categories', 'opportunities', 'organizations', 'popularCategories'));
     }
 
     public function show(Organization $organization)

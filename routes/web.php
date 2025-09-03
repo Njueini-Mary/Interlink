@@ -29,12 +29,20 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
+
+// User-facing student routes
+Route::get('/students', [\App\Http\Controllers\StudentController::class, 'index'])->name('students.index');
+Route::get('/students/{student}', [\App\Http\Controllers\StudentController::class, 'show'])->name('students.show');
+
 Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
 Route::get('/organizations/{organization}', [OrganizationController::class, 'show'])->name('organizations.show');
 
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // User-facing application routes
+    Route::get('/applications', [\App\Http\Controllers\ApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/applications/{id}', [\App\Http\Controllers\ApplicationController::class, 'show'])->name('applications.show');
 });
 
 

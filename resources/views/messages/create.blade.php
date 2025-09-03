@@ -21,7 +21,7 @@
                         <h1>Send a Message to {{ $student->name ?? 'Student' }} </h1>
                         <form action="{{ route('messages.store') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="student_id" value="{{ $studentId }}">
+                            <input type="hidden" name="student_id" value="{{ $student->id }}">
                             <textarea name="message" placeholder="Write your message here..." required></textarea>
                             <button type="submit">Send</button>
                         </form>

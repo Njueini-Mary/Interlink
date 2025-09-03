@@ -13,6 +13,14 @@ use Illuminate\Database\Eloquent\Model;
 class Student extends Model
 {
     use HasFactory;
+
+    /**
+     * Many-to-Many relationship with Skill (skills this student has).
+     */
+    public function skills()
+    {
+        return $this->belongsToMany(\App\Models\Skill::class, 'student_skill')->withTimestamps();
+    }
     /**
      * Use UUIDs as primary key.
      */
