@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class About extends Model
 {
     use HasFactory;
+    /**
+     * Use UUIDs as primary key.
+     */
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     /**
      * The table associated with the model.

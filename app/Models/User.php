@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
 
 /**
  * Class User
@@ -14,7 +13,14 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable;
+
+    /**
+     * Use UUIDs as primary key.
+     */
+    protected $keyType = 'string';
+    public $incrementing = false;
+    use HasFactory, Notifiable;
 
     /**
      * Organizations this user belongs to (as staff/admin).
@@ -22,6 +28,14 @@ class User extends Authenticatable
     public function organizations()
     {
         return $this->belongsToMany(Organization::class, 'organization_user')->withPivot('role')->withTimestamps();
+    }
+
+    /**
+     * Get the user's role from the users table.
+     */
+    public function getRoleAttribute($value)
+    {
+        return $value;
     }
 
     /**

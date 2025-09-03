@@ -1,12 +1,16 @@
-<?php
 
+<?php
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MLController;
+
+// Auth routes
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
 
 

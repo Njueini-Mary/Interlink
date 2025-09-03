@@ -12,6 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 class Message extends Model
 {
     use HasFactory;
+    /**
+     * Use UUIDs as primary key.
+     */
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'sender_id',

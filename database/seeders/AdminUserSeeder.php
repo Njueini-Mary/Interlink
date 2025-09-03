@@ -14,12 +14,11 @@ class AdminUserSeeder extends Seeder
         $admin = User::firstOrCreate([
             'email' => 'admin@interlink.test',
         ], [
-                'id' => (string) Str::uuid(),
+            'id' => (string) Str::uuid(),
             'name' => 'System Admin',
             'password' => Hash::make('password123'),
+            'role' => 'admin',
         ]);
-        if (! $admin->hasRole('admin')) {
-            $admin->assignRole('admin');
-        }
+        // No need to assign Spatie role; use 'role' column only for consistency
     }
 }

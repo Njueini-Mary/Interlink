@@ -14,6 +14,20 @@ class Organization extends Model
 {
     use HasFactory;
 
+
+    /**
+     * Ensure Eloquent treats IDs as UUID strings.
+     */
+    protected $keyType = 'string';
+    public $incrementing = false;
+    protected $casts = [
+        'id' => 'string',
+        'user_id' => 'string',
+    ];
+
+    use HasFactory;
+
+
     /**
      * Staff and admins (users) belonging to this organization.
      */

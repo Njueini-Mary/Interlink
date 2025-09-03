@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 </head>
 <body>
+  <!-- DEBUG: {{ json_encode($categories) }} -->
   @include('layouts.navbar')
 
   <div class="container py-5">
@@ -52,11 +53,11 @@
         <label class="form-label">Opportunity Type</label>
         <div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="type" id="type_internship" value="internship" {{ old('type') === 'internship' ? 'checked' : '' }} required>
+            <input class="form-check-input" type="radio" name="type" id="type_internship" value="WBL" {{ old('type') === 'WBL' ? 'checked' : '' }} required>
             <label class="form-check-label" for="type_internship">Internship</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="type" id="type_placement" value="placement" {{ old('type') === 'placement' ? 'checked' : '' }}>
+            <input class="form-check-input" type="radio" name="type" id="type_placement" value="SBL" {{ old('type') === 'SBL' ? 'checked' : '' }}>
             <label class="form-check-label" for="type_placement">Placement</label>
           </div>
         </div>
@@ -64,23 +65,65 @@
 
       <!-- Pricing Section -->
       <div id="pricingSection" class="mb-3">
-        <!-- Fixed Price Field -->
-        <div id="fixedPriceField">
-          <label for="budget" class="form-label">Budget (Fixed Price)</label>
-          <input type="number" step="0.01" class="form-control" id="budget" name="budget" placeholder="E.g., 50000" value="{{ old('budget') }}">
+        <div class="mb-3">
+          <label for="currency" class="form-label">Currency</label>
+          <select class="form-select" id="currency" name="currency" required>
+            <option value="KES" {{ old('currency', 'KES') == 'KES' ? 'selected' : '' }}>KES (Kenyan Shilling)</option>
+            <option value="USD" {{ old('currency') == 'USD' ? 'selected' : '' }}>USD (US Dollar)</option>
+            <option value="EUR" {{ old('currency') == 'EUR' ? 'selected' : '' }}>EUR (Euro)</option>
+            <option value="GBP" {{ old('currency') == 'GBP' ? 'selected' : '' }}>GBP (British Pound)</option>
+            <option value="INR" {{ old('currency') == 'INR' ? 'selected' : '' }}>INR (Indian Rupee)</option>
+            <!-- Add more currencies as needed -->
+          </select>
+        </div>
+        <label class="form-label">Compensation Type</label>
+        <div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="compensation_type" id="comp_type_monthly" value="monthly" {{ old('compensation_type', 'monthly') === 'monthly' ? 'checked' : '' }} required>
+            <label class="form-check-label" for="comp_type_monthly">Monthly Stipend</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="compensation_type" id="comp_type_hourly" value="hourly" {{ old('compensation_type') === 'hourly' ? 'checked' : '' }}>
+            <label class="form-check-label" for="comp_type_hourly">Hourly Rate</label>
+          </div>
+        </div>
+        <!-- Monthly Stipend Field -->
+        <div id="stipendField" style="margin-top: 1rem;">
+          <label for="monthly_stipend" class="form-label">Monthly Stipend</label>
+          <input type="number" step="0.01" class="form-control" id="monthly_stipend" name="monthly_stipend" placeholder="E.g., 5000" value="{{ old('monthly_stipend') }}">
         </div>
         <!-- Hourly Rate Fields -->
-        <div id="hourlyRateFields" class="row" style="display: none;">
+        <div id="hourlyRateFields" class="row" style="margin-top: 1rem; {{ old('compensation_type') === 'hourly' ? '' : 'display:none;' }}">
           <div class="col-md-6">
             <label for="min_rate" class="form-label">Minimum Rate (per hour)</label>
-            <input type="number" step="0.01" class="form-control" id="min_rate" name="min_rate" placeholder="E.g., 1000" value="{{ old('min_rate') }}">
+            <input type="number" step="0.01" class="form-control" id="min_rate" name="min_rate" placeholder="E.g., 100" value="{{ old('min_rate') }}">
           </div>
           <div class="col-md-6">
             <label for="max_rate" class="form-label">Maximum Rate (per hour)</label>
-            <input type="number" step="0.01" class="form-control" id="max_rate" name="max_rate" placeholder="E.g., 2000" value="{{ old('max_rate') }}">
+            <input type="number" step="0.01" class="form-control" id="max_rate" name="max_rate" placeholder="E.g., 200" value="{{ old('max_rate') }}">
           </div>
         </div>
       </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const monthlyRadio = document.getElementById('comp_type_monthly');
+          const hourlyRadio = document.getElementById('comp_type_hourly');
+          const stipendField = document.getElementById('stipendField');
+          const hourlyFields = document.getElementById('hourlyRateFields');
+          function toggleFields() {
+            if (monthlyRadio.checked) {
+              stipendField.style.display = '';
+              hourlyFields.style.display = 'none';
+            } else {
+              stipendField.style.display = 'none';
+              hourlyFields.style.display = '';
+            }
+          }
+          monthlyRadio.addEventListener('change', toggleFields);
+          hourlyRadio.addEventListener('change', toggleFields);
+          toggleFields();
+        });
+      </script>
 
       <!-- Deadline -->
       <div class="mb-3">

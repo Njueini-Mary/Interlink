@@ -21,6 +21,11 @@ return new class extends Migration {
             $table->enum('type', ['WBL', 'SBL']);
             $table->date('deadline')->nullable();
             $table->enum('status', ['open', 'closed', 'filled'])->default('open');
+            $table->enum('compensation_type', ['monthly', 'hourly'])->default('monthly');
+            $table->string('currency', 8)->nullable();
+            $table->decimal('monthly_stipend', 12, 2)->nullable();
+            $table->decimal('min_hourly_rate', 12, 2)->nullable();
+            $table->decimal('max_hourly_rate', 12, 2)->nullable();
             $table->timestamps();
 
             $table->foreign('category_id')->references('id')->on('categories')->nullOnDelete();

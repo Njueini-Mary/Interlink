@@ -13,11 +13,11 @@ class UserObserver
      */
     public function created(User $user)
     {
-        if ($user->hasRole('freelancer')) {
+        if ($user->role === 'freelancer') {
             Freelancer::create(['user_id' => $user->id]);
         }
 
-        if ($user->hasRole('client')) {
+        if ($user->role === 'client') {
             Client::create(['user_id' => $user->id]);
         }
     }

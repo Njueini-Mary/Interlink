@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /**
  * Class Opportunity
@@ -13,6 +14,23 @@ use Illuminate\Database\Eloquent\Model;
 class Opportunity extends Model
 {
     use HasFactory;
+
+    /**
+     * Use UUIDs as primary key.
+     */
+    protected $keyType = 'string';
+    public $incrementing = false;
+    use HasFactory;
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string) Str::uuid();
+            }
+        });
+    }
 
     /**
      * Applications submitted for this opportunity.
@@ -58,6 +76,11 @@ class Opportunity extends Model
         'type',
         'deadline',
         'status',
+        'monthly_stipend',
+        'min_hourly_rate',
+        'max_hourly_rate',
+        'compensation_type',
+        'currency',
     ];
 
     // Ensure deadline is cast to a date instance.
