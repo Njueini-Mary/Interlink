@@ -8,12 +8,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-dark: #4338ca;
-            --secondary: #0ea5e9;
-            --dark: #1f2937;
-            --light: #f9fafb;
-            --gray: #6b7280;
+            --primary: #111827; /* Black */
+            --primary-dark: #000000;
+            --secondary: #6B7280; /* Grey */
+            --accent: #3B82F6; /* Electric Blue */
+            --accent-alt: #06B6D4; /* Cyan */
+            --dark: #111827;
+            --light: #FFFFFF;
+            --gray: #6B7280;
             --light-gray: #e5e7eb;
         }
 
@@ -44,8 +46,8 @@
 
         /* Footer Styles */
         .footer {
-            background-color: var(--dark);
-            color: white;
+            background-color: var(--primary);
+            color: var(--light);
             padding: 4rem 0 2rem;
             margin-top: auto;
         }
@@ -74,7 +76,7 @@
             gap: 0.5rem;
             font-size: 1.5rem;
             font-weight: 700;
-            color: white;
+            color: var(--accent);
             text-decoration: none;
             margin-bottom: 1rem;
         }
@@ -112,7 +114,7 @@
             font-size: 1.125rem;
             font-weight: 600;
             margin-bottom: 1.25rem;
-            color: white;
+            color: var(--accent);
         }
 
         .footer-links {
@@ -122,14 +124,14 @@
         }
 
         .footer-link {
-            color: var(--light-gray);
+            color: var(--secondary);
             text-decoration: none;
             transition: color 0.2s ease;
             font-size: 0.95rem;
         }
 
         .footer-link:hover {
-            color: white;
+            color: var(--accent-alt);
         }
 
         .contact-info {
@@ -146,7 +148,7 @@
         }
 
         .contact-icon {
-            color: var(--primary);
+            color: var(--accent);
             font-size: 1.125rem;
             width: 20px;
             text-align: center;
@@ -166,8 +168,8 @@
         }
 
         .newsletter-button {
-            background-color: var(--primary);
-            color: white;
+            background-color: var(--accent);
+            color: var(--light);
             border: none;
             border-radius: 0 0.375rem 0.375rem 0;
             padding: 0 1rem;
@@ -176,7 +178,7 @@
         }
 
         .newsletter-button:hover {
-            background-color: var(--primary-dark);
+            background-color: var(--accent-alt);
         }
 
         .footer-bottom {
@@ -210,8 +212,8 @@
             justify-content: center;
             width: 40px;
             height: 40px;
-            background-color: var(--primary);
-            color: white;
+            background-color: var(--accent);
+            color: var(--light);
             border-radius: 50%;
             position: fixed;
             bottom: 2rem;
@@ -256,7 +258,7 @@
                 <!-- Column 1: About -->
                 <div class="footer-column">
                     <a href="#" class="footer-logo">
-                        <i class="fas fa-briefcase"></i>
+                        <i class="fas fa-lightbulb"></i>
                         Interlink
                     </a>
                     <p class="footer-description">
@@ -316,7 +318,7 @@
                 </div>
 
                 <!-- Column 5: Contact & Newsletter -->
-                <div class="footer-column">
+                <!-- <div class="footer-column">
                     <h3 class="footer-heading">Stay Updated</h3>
                     <p class="footer-description">Subscribe to our newsletter for the latest updates, tips, and special offers.</p>
                     <form class="newsletter-form">
@@ -340,7 +342,7 @@
                             <span>support@interlink.com</span>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Footer Bottom -->

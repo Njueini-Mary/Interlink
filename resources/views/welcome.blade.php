@@ -20,7 +20,7 @@
                     <a href="/about" class="btn btn-primary">How It Works</a>
                     <a href="/opportunities" class="btn btn-outline">Available Opportunities</a>
                 </div>
-                <img src="\images\75532.jpg" alt="Freelancing platform" class="hero-image">
+                <!-- <img src="\images\75532.jpg" alt="Freelancing platform" class="hero-image"> -->
             </div>
         </div>
     </section>

@@ -80,24 +80,11 @@
                     </a>
                 @endif
             </div>
-            <div class="mt-4 text-center">
-                <span class="text-sm text-gray-500">Don't have an account?</span>
-                <a href="{{ route('register') }}" class="text-sm text-indigo-600 hover:text-indigo-900 font-semibold">Register for Interlink</a>
-            </div>
 
                 <button type="submit"
                         class="ml-3 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Log in
                 </button>
-            </div>
-            <div class="mt-4 text-center">
-                <p class="text-sm text-gray-600">
-                    Don't have an account? 
-                    <a href="{{ route('register') }}" class="text-indigo-600 hover:text-indigo-800">
-                        Sign up
-                    </a>
-                </p>
-            </div>
 
         </form>
     </div>

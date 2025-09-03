@@ -252,21 +252,32 @@
 
                 <div class="desktop-menu">
                     @php $user = Auth::user(); $role = $user->role ?? null; @endphp
-                    @if($role === 'admin')
-                        <a href="/admin/dashboard" class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }}"><i class="fas fa-tachometer-alt"></i> Admin Dashboard</a>
-                    @endif
-                    @if($role === 'student')
-                        <a href="/student/dashboard" class="nav-link {{ request()->is('student/dashboard') ? 'active' : '' }}"><i class="fas fa-user-graduate"></i> Student Dashboard</a>
-                        <a href="/opportunities" class="nav-link {{ request()->is('opportunities') ? 'active' : '' }}"><i class="fas fa-briefcase"></i> Opportunities</a>
-                        <a href="/applications" class="nav-link {{ request()->is('applications') ? 'active' : '' }}"><i class="fas fa-file-alt"></i> My Applications</a>
-                        <a href="/community-service" class="nav-link {{ request()->is('community-service') ? 'active' : '' }}"><i class="fas fa-hands-helping"></i> Community Service</a>
-                    @endif
-                    @if($role === 'organization')
-                        <a href="/organization/dashboard" class="nav-link {{ request()->is('organization/dashboard') ? 'active' : '' }}"><i class="fas fa-building"></i> Organization Dashboard</a>
-                        <a href="/organization/opportunities" class="nav-link {{ request()->is('organization/opportunities') ? 'active' : '' }}"><i class="fas fa-plus-circle"></i> Post Opportunity</a>
-                        <a href="/organization/applicants" class="nav-link {{ request()->is('organization/applicants') ? 'active' : '' }}"><i class="fas fa-users"></i> Applicants</a>
-                    @endif
-                    {{-- Profile and Logout links are now only in the dropdown --}}
+                    @guest
+                        <a href="/about" class="nav-link">How It Works</a>
+                        <a href="/login" class="nav-link">Log In</a>
+                        <a href="/register" class="nav-link">Sign Up</a>
+                    @endguest
+                    @auth
+                            <a href="/dashboard" class="nav-link btn-secondary">Dashboard</a>
+                        @if($role === 'admin')
+                            <a href="/admin/organizations" class="nav-link">Organizations</a>
+                            <a href="/admin/students" class="nav-link">Students</a>
+                            <a href="/admin/opportunities" class="nav-link">Opportunities</a>
+                            <a href="/admin/applications" class="nav-link">Applications</a>
+                            <a href="/admin/notifications" class="nav-link">Notifications</a>
+                            <a href="/admin/activities" class="nav-link">Activities</a>
+                        @elseif($role === 'organization')
+                            <a href="/opportunities" class="nav-link">My Opportunities</a>
+                            <a href="/opportunities/create" class="nav-link">Post Opportunity</a>
+                            <a href="/applications" class="nav-link">Applications</a>
+                            <a href="/students" class="nav-link">Find Students</a>
+                        @elseif($role === 'student')
+                            <a href="/student/dashboard" class="nav-link">Student Dashboard</a>
+                            <a href="/opportunities" class="nav-link">Browse Opportunities</a>
+                            <a href="/applications" class="nav-link">My Applications</a>
+                            <a href="/organizations" class="nav-link">Organizations</a>
+                        @endif
+                    @endauth
                 </div>
 
                 <div class="user-menu">
@@ -325,35 +336,31 @@
         </div>
 
         <div class="mobile-nav-links">
-            <div style="padding: 1rem 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 1rem;">
-                <div style="font-weight: 600; margin-bottom: 0.5rem;">{{ $user->name ?? 'User' }}</div>
-                <div style="color: #6b7280; font-size: 0.875rem;">{{ $user->email ?? '' }}</div>
-            </div>
-            @if($role === 'admin')
-                <a href="/admin/dashboard" class="mobile-nav-link">Admin Dashboard</a>
-            @endif
-            @if($role === 'student')
-                <a href="/student/dashboard" class="mobile-nav-link">Student Dashboard</a>
-                <a href="/opportunities" class="mobile-nav-link">Opportunities</a>
-                <a href="/applications" class="mobile-nav-link">My Applications</a>
-                <a href="/community-service" class="mobile-nav-link">Community Service</a>
-            @endif
-            @if($role === 'organization')
-                <a href="/organization/dashboard" class="mobile-nav-link">Organization Dashboard</a>
-                <a href="/organization/opportunities" class="mobile-nav-link">Post Opportunity</a>
-                <a href="/organization/applicants" class="mobile-nav-link">Applicants</a>
-            @endif
-            <a href="{{ route('profile.update.form') }}" class="mobile-nav-link"><i class="fas fa-user"></i> My Profile</a>
-            <a href="#" class="mobile-nav-link"><i class="fas fa-cog"></i> Settings</a>
-            <a href="#" class="mobile-nav-link"><i class="fas fa-chart-line"></i> Analytics</a>
-            <a href="#" class="mobile-nav-link"><i class="fas fa-question-circle"></i> Help & Support</a>
-            <a href="{{ route('logout') }}" class="mobile-nav-link"
-                onclick="event.preventDefault(); document.getElementById('mobile-logout-form').submit();">
-                <i class="fas fa-sign-out-alt"></i> Sign Out
-            </a>
-            <form id="mobile-logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
+            @guest
+                <a href="/about" class="mobile-nav-link">How It Works</a>
+                <a href="/login" class="mobile-nav-link">Log In</a>
+                <a href="/register" class="mobile-nav-link">Sign Up</a>
+            @endguest
+            @auth
+                @if($role === 'admin')
+                    <a href="/admin/organizations" class="mobile-nav-link">Organizations</a>
+                    <a href="/admin/students" class="mobile-nav-link">Students</a>
+                    <a href="/admin/opportunities" class="mobile-nav-link">Opportunities</a>
+                    <a href="/admin/applications" class="mobile-nav-link">Applications</a>
+                    <a href="/admin/notifications" class="mobile-nav-link">Notifications</a>
+                    <a href="/admin/activities" class="mobile-nav-link">Activities</a>
+                @elseif($role === 'organization')
+                    <a href="/opportunities" class="mobile-nav-link">My Opportunities</a>
+                    <a href="/opportunities/create" class="mobile-nav-link">Post Opportunity</a>
+                    <a href="/applications" class="mobile-nav-link">Applications</a>
+                    <a href="/students" class="mobile-nav-link">Find Students</a>
+                @elseif($role === 'student')
+                    <a href="/student/dashboard" class="mobile-nav-link">Student Dashboard</a>
+                    <a href="/opportunities" class="mobile-nav-link">Browse Opportunities</a>
+                    <a href="/applications" class="mobile-nav-link">My Applications</a>
+                    <a href="/organizations" class="mobile-nav-link">Organizations</a>
+                @endif
+            @endauth
         </div>
     </div>
     </div>

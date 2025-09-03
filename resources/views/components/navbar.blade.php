@@ -10,12 +10,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
     :root {
-        --primary: #4f46e5;
-        --primary-dark: #4338ca;
-        --secondary: #0ea5e9;
-        --dark: #1f2937;
-        --light: #f9fafb;
-        --gray: #6b7280;
+        --primary: #111827; /* Black */
+        --primary-dark: #000000;
+        --secondary: #6B7280; /* Grey */
+        --accent: #3B82F6; /* Electric Blue */
+        --accent-alt: #06B6D4; /* Cyan */
+        --dark: #111827;
+        --light: #FFFFFF;
+        --gray: #6B7280;
         --light-gray: #e5e7eb;
     }
 
@@ -33,10 +35,10 @@
     }
 
     .outside-nav {
-        background-color: white;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        position: relative;
-        z-index: 10;
+    background-color: var(--light);
+    box-shadow: 0 2px 10px rgba(17, 24, 39, 0.08);
+    position: relative;
+    z-index: 10;
     }
 
     .container {
@@ -58,7 +60,7 @@
         gap: 0.5rem;
         font-size: 1.5rem;
         font-weight: 700;
-        color: var(--primary);
+    color: var(--accent);
         text-decoration: none;
     }
 
@@ -69,7 +71,7 @@
     }
 
     .nav-link {
-        color: var(--dark);
+    color: var(--secondary);
         text-decoration: none;
         font-weight: 500;
         transition: all 0.2s ease;
@@ -78,7 +80,7 @@
     }
 
     .nav-link:hover {
-        color: var(--primary);
+    color: var(--accent);
     }
 
     .nav-link::after {
@@ -88,7 +90,7 @@
         left: 0;
         width: 0;
         height: 2px;
-        background-color: var(--primary);
+    background-color: var(--accent-alt);
         transition: width 0.3s ease;
     }
 
@@ -109,25 +111,25 @@
     }
 
     .btn-primary {
-        background-color: var(--primary);
-        color: white;
-        border: 1px solid var(--primary);
+    background-color: var(--accent);
+    color: var(--light);
+    border: 1px solid var(--accent);
     }
 
     .btn-primary:hover {
-        background-color: var(--primary-dark);
-        border-color: var(--primary-dark);
+    background-color: var(--accent-alt);
+    border-color: var(--accent-alt);
     }
 
     .btn-outline {
-        background-color: transparent;
-        color: var(--primary);
-        border: 1px solid var(--primary);
+    background-color: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
     }
 
     .btn-outline:hover {
-        background-color: var(--primary);
-        color: white;
+    background-color: var(--accent-alt);
+    color: var(--light);
     }
 
     .mobile-menu-button {
@@ -262,78 +264,99 @@
 </head>
 
 <body>
-    <!-- Outside Navigation Bar -->
-    <nav class="outside-nav" x-data="{ mobileMenuOpen: false }">
-        <div class="container">
-            <div class="nav-content">
-                <a href="/" class="logo">
-                    <i class="fas fa-briefcase"></i>
+
+    <div x-data="{ mobileMenuOpen: false }">
+        <!-- Outside Navigation Bar -->
+        <nav class="outside-nav">
+            <div class="container">
+                <div class="nav-content">
+                    <a href="/" class="logo">
+                        <i class="fas fa-lightbulb"></i>
+                        Interlink
+                    </a>
+
+                    <div class="nav-menu">
+                        @guest
+                        <a href="/about" class="nav-link">How It Works</a>
+                        @endguest
+                        {{-- <a href="/students" class="nav-link">Browse Students</a> --}}
+
+                        @auth
+                            @if(auth()->user()->role === 'admin')
+                                <!-- <a href="/admin/users" class="nav-link">Manage Users</a> -->
+                                <a href="/admin/organizations" class="nav-link">Organizations</a>
+                                <a href="/admin/students" class="nav-link">Students</a>
+                                <a href="/admin/opportunities" class="nav-link">Opportunities</a>
+                                <a href="/admin/applications" class="nav-link">Applications</a>
+                                <a href="/admin/notifications" class="nav-link">Notifications</a>
+                                <a href="/admin/activities" class="nav-link">Activities</a>
+                            @elseif(auth()->user()->role === 'organization')
+                                <a href="/opportunities" class="nav-link">My Opportunities</a>
+                                <a href="/opportunities/create" class="nav-link">Post Opportunity</a>
+                                <a href="/applications" class="nav-link">Applications</a>
+                                <a href="/students" class="nav-link">Find Students</a>
+                            @elseif(auth()->user()->role === 'student')
+                                <a href="/opportunities" class="nav-link">Browse Opportunities</a>
+                                <a href="/applications" class="nav-link">My Applications</a>
+                                <a href="/organizations" class="nav-link">Organizations</a>
+                            @endif
+                            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+                        @else
+                            <a href="/login" class="btn btn-outline">Log In</a>
+                            <a href="/register" class="btn btn-primary">Sign Up</a>
+                        @endauth
+                    </div>
+
+                    <button class="mobile-menu-button" @click="mobileMenuOpen = true">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu Dropdown -->
+        <div class="dropdown-menu" :class="{ 'open': mobileMenuOpen }" x-show="mobileMenuOpen">
+            <div class="dropdown-header">
+                <a href="#" class="logo">
+                    <i class="fas fa-lightbulb"></i>
                     Interlink
                 </a>
-
-                <div class="nav-menu">
-                    @guest
-                    <a href="/about" class="nav-link">How It Works</a>
-                    @endguest
-                    {{-- <a href="/students" class="nav-link">Browse Students</a> --}}
-
-                    @auth
-                        @if(auth()->user()->role === 'admin')
-                            <!-- <a href="/admin/users" class="nav-link">Manage Users</a> -->
-                            <a href="/admin/organizations" class="nav-link">Organizations</a>
-                            <a href="/admin/students" class="nav-link">Students</a>
-                            <a href="/admin/opportunities" class="nav-link">Opportunities</a>
-                            <a href="/admin/applications" class="nav-link">Applications</a>
-                            <a href="/admin/notifications" class="nav-link">Notifications</a>
-                            <a href="/admin/activities" class="nav-link">Activities</a>
-                        @elseif(auth()->user()->role === 'organization')
-                            <a href="/organization/dashboard" class="nav-link">Org Dashboard</a>
-                            <a href="/opportunities" class="nav-link">My Opportunities</a>
-                            <a href="/opportunities/create" class="nav-link">Post Opportunity</a>
-                            <a href="/applications" class="nav-link">Applications</a>
-                            <a href="/students" class="nav-link">Find Students</a>
-                        @elseif(auth()->user()->role === 'student')
-                            <a href="/student/dashboard" class="nav-link">Student Dashboard</a>
-                            <a href="/opportunities" class="nav-link">Browse Opportunities</a>
-                            <a href="/applications" class="nav-link">My Applications</a>
-                            <a href="/organizations" class="nav-link">Organizations</a>
-                        @endif
-                        <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
-                    @else
-                        <a href="/login" class="btn btn-outline">Log In</a>
-                        <a href="/register" class="btn btn-primary">Sign Up</a>
-                    @endauth
-                </div>
-
-                <button class="mobile-menu-button" @click="mobileMenuOpen = true">
-                    <i class="fas fa-bars"></i>
+                <button class="close-menu" @click="mobileMenuOpen = false">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-        </div>
-    </nav>
 
-    <!-- Mobile Menu Dropdown -->
-    <div class="dropdown-menu" :class="{ 'open': mobileMenuOpen }" x-show="mobileMenuOpen">
-        <div class="dropdown-header">
-            <a href="#" class="logo">
-                <i class="fas fa-briefcase"></i>
-                Interlink
-            </a>
-            <button class="close-menu" @click="mobileMenuOpen = false">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+            <div class="dropdown-links">
+                @guest
+                    <a href="/about" class="dropdown-link">How It Works</a>
+                    <a href="/login" class="dropdown-link">Log In</a>
+                    <a href="/register" class="dropdown-link">Sign Up</a>
+                @endguest
+                @auth
+                    @if(auth()->user()->role === 'admin')
+                        <a href="/admin/organizations" class="dropdown-link">Organizations</a>
+                        <a href="/admin/students" class="dropdown-link">Students</a>
+                        <a href="/admin/opportunities" class="dropdown-link">Opportunities</a>
+                        <a href="/admin/applications" class="dropdown-link">Applications</a>
+                        <a href="/admin/notifications" class="dropdown-link">Notifications</a>
+                        <a href="/admin/activities" class="dropdown-link">Activities</a>
+                    @elseif(auth()->user()->role === 'organization')
+                        <a href="/opportunities" class="dropdown-link">My Opportunities</a>
+                        <a href="/opportunities/create" class="dropdown-link">Post Opportunity</a>
+                        <a href="/applications" class="dropdown-link">Applications</a>
+                        <a href="/students" class="dropdown-link">Find Students</a>
+                    @elseif(auth()->user()->role === 'student')
+                        <a href="/opportunities" class="dropdown-link">Browse Opportunities</a>
+                        <a href="/applications" class="dropdown-link">My Applications</a>
+                        <a href="/organizations" class="dropdown-link">Organizations</a>
+                    @endif
+                    <a href="/dashboard" class="btn btn-primary" style="width: 100%; text-align: center;">Back to Dashboard</a>
+                @endauth
+            </div>
 
-        <div class="dropdown-links">
-            <a href="#" class="dropdown-link">How It Works</a>
-            <a href="/students" class="dropdown-link">Browse Students</a>
-            <a href="/organizations" class="dropdown-link">For Organizations</a>
-            <a href="/students" class="dropdown-link">For Students</a>
-        </div>
-
-        <div class="dropdown-buttons">
-            <a href="#" class="btn btn-outline" style="width: 100%; text-align: center;">Log In</a>
-            <a href="#" class="btn btn-primary" style="width: 100%; text-align: center;">Sign Up</a>
+            <div class="dropdown-buttons">
+                <!-- Auth/guest links now in dropdown-links above -->
+            </div>
         </div>
     </div>
 

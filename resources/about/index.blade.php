@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
-    @include('layouts.navbar')
+    @include('components.navbar')
     <header class="bg-indigo-600 text-white py-6">
         <div class="container mx-auto px-4">
             <h1 class="text-3xl font-bold"></h1>
