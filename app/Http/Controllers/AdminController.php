@@ -56,11 +56,79 @@ class AdminController extends Controller
     public function deleteUser($id) { /* ... */ }
 
     // --- CRUD for Organizations ---
-    public function organizations() { return view('admin.organizations.index', ['organizations' => Organization::all()]); }
-    public function showOrganization($id) { return view('admin.organizations.show', ['organization' => Organization::findOrFail($id)]); }
-    public function editOrganization($id) { return view('admin.organizations.edit', ['organization' => Organization::findOrFail($id)]); }
-    public function updateOrganization(Request $r, $id) { /* ... */ }
-    public function deleteOrganization($id) { /* ... */ }
+    /**
+     * List all organizations with optional filtering by name, email, location, or industry.
+     * Supports GET 'search' query param for filtering.
+     */
+    /**
+     * List all organizations with optional filtering and pagination.
+     * Supports GET 'search' query param for filtering.
+     * Metrics can be calculated in Blade or here as needed.
+     */
+    public function organizations(Request $request) {
+        $query = Organization::query();
+        // If a search term is provided, filter by name, email, location, or industry
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('contact_email', 'like', "%$search%")
+                  ->orWhere('location', 'like', "%$search%")
+                  ->orWhere('industry', 'like', "%$search%");
+            });
+        }
+        // Paginate results (10 per page)
+        $organizations = $query->orderBy('name')->paginate(10)->withQueryString();
+        // Pass organizations to the view (metrics handled in Blade)
+        return view('admin.organizations.index', compact('organizations'));
+    }
+
+    public function createOrganization() {
+        return view('admin.organizations.create');
+    }
+
+    public function storeOrganization(Request $r) {
+        $r->validate([
+            'name' => 'required|string|max:255',
+            'contact_email' => 'required|email|max:255',
+            'location' => 'required|string|max:255',
+            'industry' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
+            'contact_phone' => 'nullable|string|max:255',
+            'profile' => 'nullable|string',
+        ]);
+        $org = Organization::create($r->only(['name','contact_email','location','industry','website','contact_phone','profile']));
+        return redirect()->route('admin.organizations.index')->with('status', 'Organization created successfully!');
+    }
+
+    public function showOrganization($id) {
+        return view('admin.organizations.show', ['organization' => Organization::findOrFail($id)]);
+    }
+
+    public function editOrganization($id) {
+        return view('admin.organizations.edit', ['organization' => Organization::findOrFail($id)]);
+    }
+
+    public function updateOrganization(Request $r, $id) {
+        $r->validate([
+            'name' => 'required|string|max:255',
+            'contact_email' => 'required|email|max:255',
+            'location' => 'required|string|max:255',
+            'industry' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
+            'contact_phone' => 'nullable|string|max:255',
+            'profile' => 'nullable|string',
+        ]);
+        $org = Organization::findOrFail($id);
+        $org->update($r->only(['name','contact_email','location','industry','website','contact_phone','profile']));
+        return redirect()->route('admin.organizations.show', $org->id)->with('status', 'Organization updated successfully!');
+    }
+
+    public function deleteOrganization($id) {
+        $org = Organization::findOrFail($id);
+        $org->delete();
+        return redirect()->route('admin.organizations.index')->with('status', 'Organization deleted successfully!');
+    }
 
     // --- CRUD for Students ---
     public function students() { return view('admin.students.index', ['students' => Student::all()]); }

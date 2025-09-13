@@ -108,9 +108,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Organizations
     Route::get('/organizations', [$ctrl, 'organizations'])->name('organizations.index');
+    Route::get('/organizations/create', [$ctrl, 'createOrganization'])->name('organizations.create');
+    Route::post('/organizations', [$ctrl, 'storeOrganization'])->name('organizations.store');
     Route::get('/organizations/{id}', [$ctrl, 'showOrganization'])->name('organizations.show');
     Route::get('/organizations/{id}/edit', [$ctrl, 'editOrganization'])->name('organizations.edit');
-    Route::post('/organizations/{id}/edit', [$ctrl, 'updateOrganization'])->name('organizations.update');
+    Route::put('/organizations/{id}', [$ctrl, 'updateOrganization'])->name('organizations.update');
     Route::delete('/organizations/{id}', [$ctrl, 'deleteOrganization'])->name('organizations.delete');
 
     // Students
