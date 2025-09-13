@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * User model for Interlink platform.
+ *
+ * - Uses 'role' field for authorization (student, organization, admin).
+ * - Relationships: organizations, students, opportunities, etc.
+ * - Uses UUIDs for primary key.
+ * - Handles authentication and notifications.
+ */
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,14 +24,27 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * Boot function to auto-generate UUID for id field on create.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
+    /**
      * Use UUIDs as primary key.
      */
     protected $keyType = 'string';
     public $incrementing = false;
-    use HasFactory, Notifiable;
 
     /**
      * Organizations this user belongs to (as staff/admin).
+     * Use organization_user pivot table.
      */
     public function organizations()
     {

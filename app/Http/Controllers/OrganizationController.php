@@ -2,6 +2,14 @@
 
 namespace App\Http\Controllers;
 
+/**
+ * OrganizationController manages organization listing, details, and related actions.
+ *
+ * - Lists organizations with categories and popular categories.
+ * - Shows individual organization profiles.
+ * - Prepares links and icons for UI.
+ */
+
 use App\Models\Organization;
 use App\Models\Category;
 use App\Models\Opportunity;

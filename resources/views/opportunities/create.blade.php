@@ -69,11 +69,11 @@
         <div class="d-flex gap-3">
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="type" id="type_internship" value="WBL" {{ old('type') === 'WBL' ? 'checked' : '' }} required>
-            <label class="form-check-label" for="type_internship"><i class="fas fa-user-graduate me-1"></i> Internship</label>
+            <label class="form-check-label" for="type_internship"><i class="fas fa-user-graduate me-1"></i> Work Based Learning</label>
           </div>
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="type" id="type_placement" value="SBL" {{ old('type') === 'SBL' ? 'checked' : '' }}>
-            <label class="form-check-label" for="type_placement"><i class="fas fa-briefcase me-1"></i> Placement</label>
+            <label class="form-check-label" for="type_placement"><i class="fas fa-briefcase me-1"></i> Service Based Learning</label>
           </div>
         </div>
       </div>

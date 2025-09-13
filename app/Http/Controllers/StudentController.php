@@ -6,6 +6,13 @@ use App\Models\Student;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
+/**
+ * StudentController manages student listing, details, and related actions.
+ *
+ * - Lists students with categories and popular categories.
+ * - Shows individual student profiles.
+ */
+
 class StudentController extends Controller
 {
     // List all students

@@ -2,6 +2,14 @@
 
 namespace App\Models;
 
+/**
+ * Student model for Interlink platform.
+ *
+ * - Stores student profile, academic info, and relationships.
+ * - Uses UUIDs for primary key.
+ * - Relationships: skills, organizations, activities, notifications, applications.
+ */
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +20,20 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Student extends Model
 {
+    use HasFactory;
+
+    /**
+     * Boot function to auto-generate UUID for id field on create.
+     */
+        protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
     use HasFactory;
 
     /**

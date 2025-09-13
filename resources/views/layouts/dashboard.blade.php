@@ -27,6 +27,26 @@
 </head>
 <body>
     @include('layouts.navigation')
+    <!-- Toast Notification for all dashboards -->
+    <!--
+        Toast Notification Block
+        -----------------------
+        This section displays a temporary success message ("toast") at the top right of the dashboard.
+        - It appears only if there is a 'status' value in the session (set after login or other actions).
+        - The high z-index (9999) ensures it appears above all other elements, including the navbar.
+        - The green background and check icon indicate success.
+        - The close button (×) lets users dismiss the toast manually.
+        You can customize the style, position, or message as needed for your app.
+    -->
+    @if(session('status'))
+        <div class="fixed top-4 right-4" style="z-index:9999;">
+            <div class="bg-green-600 text-white px-6 py-3 rounded-lg shadow flex items-center gap-2">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ session('status') }}</span>
+                <button onclick="this.parentElement.style.display='none'" class="ml-4 text-white">&times;</button>
+            </div>
+        </div>
+    @endif
     <main class="dashboard-main">
         @hasSection('header')
             <div class="dashboard-header">@yield('header')</div>

@@ -1,5 +1,11 @@
 <?php
-
+/**
+ * Organization model for Interlink platform.
+ *
+ * - Stores organization profile, contact, and opportunity listings.
+ * - Uses UUIDs for primary key.
+ * - Relationships: users (staff/admins), students (interns), activities, notifications, opportunities, applications.
+ */
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +20,18 @@ class Organization extends Model
 {
     use HasFactory;
 
+    /**
+     * Boot function to auto-generate UUID for id field on create.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     /**
      * Ensure Eloquent treats IDs as UUID strings.
@@ -22,14 +40,12 @@ class Organization extends Model
     public $incrementing = false;
     protected $casts = [
         'id' => 'string',
-        'user_id' => 'string',
     ];
-
-    use HasFactory;
 
 
     /**
      * Staff and admins (users) belonging to this organization.
+     * Use organization_user pivot table.
      */
     public function users()
     {
@@ -71,7 +87,6 @@ class Organization extends Model
      * location: Physical or regional location
      */
     protected $fillable = [
-        'user_id',
         'name',
         'profile',
         'logo',

@@ -27,61 +27,77 @@
         @enderror
       </div>
 
-      <!-- General Fields -->
-      <div>
-        <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+    <!-- Hidden organization_name field for validation -->
+    <input type="hidden" id="organization_name" name="organization_name" value="{{ old('organization_name') }}">
+
+      <!-- Main Fields: Always Visible, but labels/placeholders are dynamic -->
+      <div class="space-y-4">
+        <label for="name" id="nameLabel" class="block text-sm font-medium text-gray-700">Full Name or Organization Name</label>
         <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name"
-               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+               placeholder="Your Full Name or Organization Name" />
         @error('name')
           <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
         @enderror
-      </div>
 
-      <div>
-        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+        <label for="email" id="emailLabel" class="block text-sm font-medium text-gray-700">Email</label>
         <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="username"
-               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+         class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+         placeholder="Your email or organization email" />
         @error('email')
           <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
         @enderror
       </div>
 
-      <!-- Extra fields for Organization -->
+      <!-- Organization Extra Fields: Only show if role is organization -->
       <div id="organizationFields" class="space-y-4 hidden">
         <h3 class="text-lg font-semibold text-gray-700">Organization Information</h3>
-        <div>
-          <label for="organization_name" class="block text-sm font-medium text-gray-700">Organization Name</label>
-          <input id="organization_name" type="text" name="organization_name" value="{{ old('organization_name') }}"
-                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
-          @error('organization_name')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-          @enderror
-        </div>
-        <div>
-          <label for="organization_profile" class="block text-sm font-medium text-gray-700">Organization Profile</label>
-          <textarea id="organization_profile" name="organization_profile" rows="3"
-                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('organization_profile') }}</textarea>
-          @error('organization_profile')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-          @enderror
-        </div>
-        <!-- Organization Logo file upload -->
-        <div>
-          <label for="organization_logo" class="block text-sm font-medium text-gray-700">Organization Logo</label>
-          <input id="organization_logo" type="file" name="organization_logo"
-                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700"/>
-          @error('organization_logo')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-          @enderror
-        </div>
-        <div>
-          <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
-          <input id="location" type="text" name="location" value="{{ old('location') }}"
-                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
-          @error('location')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-          @enderror
-        </div>
+        <label for="organization_profile" class="block text-sm font-medium text-gray-700">Organization Profile</label>
+        <textarea id="organization_profile" name="organization_profile" rows="3"
+                  class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Brief description of your organization">{{ old('organization_profile') }}</textarea>
+        @error('organization_profile')
+          <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+        @enderror
+
+        <label for="industry" class="block text-sm font-medium text-gray-700">Industry</label>
+        <input id="industry" type="text" name="industry" value="{{ old('industry') }}"
+               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+               placeholder="Industry (e.g. Technology, Education)" />
+        @error('industry')
+          <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+        @enderror
+
+        <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+        <input id="location" type="text" name="location" value="{{ old('location') }}"
+               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+               placeholder="Organization Location (City, Country)" />
+        @error('location')
+          <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+        @enderror
+
+        <label for="organization_logo" class="block text-sm font-medium text-gray-700">Organization Logo (optional)</label>
+        <input id="organization_logo" type="file" name="organization_logo"
+               class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700"/>
+        @error('organization_logo')
+          <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+        @enderror
+
+        <label for="website" class="block text-sm font-medium text-gray-700">Website (optional)</label>
+        <input id="website" type="text" name="website" value="{{ old('website') }}"
+               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+               placeholder="Organization Website (optional)" />
+        @error('website')
+          <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+        @enderror
+
+        <label for="contact_phone" class="block text-sm font-medium text-gray-700">Contact Phone (optional)</label>
+        <input id="contact_phone" type="text" name="contact_phone" value="{{ old('contact_phone') }}"
+               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+               placeholder="Organization Contact Phone (optional)" />
+        @error('contact_phone')
+          <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+        @enderror
       </div>
 
       <!-- Extra fields for Student -->
@@ -89,25 +105,46 @@
         <h3 class="text-lg font-semibold text-gray-700">Student Information</h3>
         <div>
           <label for="university" class="block text-sm font-medium text-gray-700">University</label>
-          <input id="university" type="text" name="university" value="{{ old('university') }}"
-                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+     <input id="university" type="text" name="university" value="{{ old('university') }}"
+       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+       placeholder="Your University" />
           @error('university')
             <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
           @enderror
         </div>
         <div>
           <label for="course" class="block text-sm font-medium text-gray-700">Course</label>
-          <input id="course" type="text" name="course" value="{{ old('course') }}"
-                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+     <input id="course" type="text" name="course" value="{{ old('course') }}"
+       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+       placeholder="Your Course of Study" />
           @error('course')
             <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
           @enderror
         </div>
         <div>
           <label for="year" class="block text-sm font-medium text-gray-700">Year of Study</label>
-          <input id="year" type="number" name="year" value="{{ old('year') }}"
-                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+     <input id="year" type="number" name="year" value="{{ old('year') }}"
+       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+       placeholder="Year of Study (e.g. 2)" />
           @error('year')
+            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+          @enderror
+        </div>
+        <div>
+          <label for="academic_field" class="block text-sm font-medium text-gray-700">Academic Field</label>
+     <input id="academic_field" type="text" name="academic_field" value="{{ old('academic_field') }}"
+       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+       placeholder="Your Academic Field (e.g. Computer Science)" />
+          @error('academic_field')
+            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+          @enderror
+        </div>
+        <div>
+          <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
+          <textarea id="bio" name="bio" rows="3"
+                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="A short bio about yourself">{{ old('bio') }}</textarea>
+          @error('bio')
             <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
           @enderror
         </div>
@@ -148,9 +185,28 @@
         </a>
         <button type="submit"
                 class="inline-flex items-center px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          Register
+          <i class="fas fa-user-plus me-2"></i> Register
         </button>
       </div>
+  <!-- Toast Notifications: shown if session('status') is set after redirect -->
+  @if(session('status'))
+    <div class="fixed top-4 right-4 z-50">
+      <div class="@if(str_contains(session('status'), 'failed')) bg-red-600 @else bg-green-600 @endif text-white px-6 py-3 rounded-lg shadow flex items-center gap-2">
+        <i class="fas @if(str_contains(session('status'), 'failed')) fa-times-circle @else fa-check-circle @endif"></i>
+        <span>{{ session('status') }}</span>
+        <button onclick="this.parentElement.style.display='none'" class="ml-4 text-white">&times;</button>
+      </div>
+    </div>
+  @endif
+  @if(session('resent'))
+    <div class="fixed top-20 right-4 z-50">
+      <div class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow flex items-center gap-2">
+        <i class="fas fa-envelope"></i>
+        <span>A verification email has been sent. Please check your inbox.</span>
+        <button onclick="this.parentElement.style.display='none'" class="ml-4 text-white">&times;</button>
+      </div>
+    </div>
+  @endif
     </form>
   </div>
 
@@ -158,22 +214,49 @@
     const roleSelect = document.getElementById('role');
     const organizationFields = document.getElementById('organizationFields');
     const studentFields = document.getElementById('studentFields');
+    const nameLabel = document.getElementById('nameLabel');
+    const nameInput = document.getElementById('name');
+    const emailLabel = document.getElementById('emailLabel');
+    const emailInput = document.getElementById('email');
+     const orgNameInput = document.getElementById('organization_name');
 
     function updateRoleFields() {
       const selectedRole = roleSelect.value;
       organizationFields.classList.add('hidden');
       studentFields.classList.add('hidden');
-      // Remove required attributes
-      ['organization_name','organization_profile','location'].forEach(id => { const el = document.getElementById(id); if(el) el.required = false; });
-      ['university','course','year'].forEach(id => { const el = document.getElementById(id); if(el) el.required = false; });
+
+      // Dynamic labels and placeholders
       if (selectedRole === 'organization') {
+        nameLabel.textContent = "Organization Name";
+        nameInput.placeholder = "Organization Name";
+        emailLabel.textContent = "Organization Email";
+        emailInput.placeholder = "Organization email";
         organizationFields.classList.remove('hidden');
-        ['organization_name','organization_profile','location'].forEach(id => { const el = document.getElementById(id); if(el) el.required = true; });
+         orgNameInput.value = nameInput.value;
+         orgNameInput.disabled = false;
       } else if (selectedRole === 'student') {
+        nameLabel.textContent = "Full Name";
+        nameInput.placeholder = "Your Full Name";
+        emailLabel.textContent = "Student Email";
+        emailInput.placeholder = "Your student email";
         studentFields.classList.remove('hidden');
-        ['university','course','year'].forEach(id => { const el = document.getElementById(id); if(el) el.required = true; });
+         orgNameInput.value = '';
+         orgNameInput.disabled = true;
+      } else {
+        nameLabel.textContent = "Full Name or Organization Name";
+        nameInput.placeholder = "Your Full Name or Organization Name";
+        emailLabel.textContent = "Email";
+        emailInput.placeholder = "Your email or organization email";
+         orgNameInput.value = '';
+         orgNameInput.disabled = true;
       }
     }
+     // Sync organization_name with name field on input
+     nameInput.addEventListener('input', function() {
+       if (roleSelect.value === 'organization') {
+         orgNameInput.value = nameInput.value;
+       }
+     });
     roleSelect.addEventListener('change', updateRoleFields);
     document.addEventListener('DOMContentLoaded', updateRoleFields);
   </script>

@@ -10,7 +10,9 @@
 <body class="bg-gradient-to-tr from-indigo-100 to-white min-h-screen flex items-center justify-center px-4">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
     <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">Interlink Portal Login</h2>
-    <p class="mb-4 text-center text-gray-500">Sign in to access internships, placements, and organization features.</p>
+    <!-- Inclusive subtitle for all user types -->
+    <!-- General marketing subtitle for all users -->
+    <p class="mb-4 text-center text-gray-500">Sign in to connect, collaborate, and unlock new opportunities on Interlink.</p>
 
         <!-- Session Status -->
         @if (session('status'))
@@ -28,10 +30,16 @@
 
             <!-- Email Address -->
             <div>
-                <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-                <input id="email" name="email" type="email" autocomplete="username" required autofocus
-                       value="{{ old('email') }}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                <!--
+                                    For organization staff, use your personal email (not company email).
+                                    For students, use your student email.
+                                    For admins, use your admin email.
+                                -->
+                                <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                                <input id="email" name="email" type="email" autocomplete="username" required autofocus
+                                             value="{{ old('email') }}"
+                                             class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                             placeholder="Organization email (used for login)" />
                 @error('email')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
