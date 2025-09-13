@@ -131,35 +131,168 @@ class AdminController extends Controller
     }
 
     // --- CRUD for Students ---
-    public function students() { return view('admin.students.index', ['students' => Student::all()]); }
+    /**
+     * Show paginated list of students for admin view.
+     * Uses Eloquent pagination for correct numbering and navigation.
+     * Filters/search can be added via query parameters.
+     */
+    /**
+     * Show paginated and filtered list of students for admin view.
+     * Supports search by name, university, course, and filter by year/university.
+     */
+    public function students(Request $r) {
+        $query = Student::with('user');
+        if ($r->filled('search')) {
+            $search = $r->input('search');
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($qu) use ($search) {
+                    $qu->where('name', 'like', "%$search%") ;
+                })
+                ->orWhere('university', 'like', "%$search%")
+                ->orWhere('course', 'like', "%$search%") ;
+            });
+        }
+        if ($r->filled('year')) {
+            $query->where('year', $r->input('year'));
+        }
+        if ($r->filled('university')) {
+            $query->where('university', $r->input('university'));
+        }
+        $students = $query->paginate(10)->appends($r->except('page'));
+        return view('admin.students.index', compact('students'));
+    }
     public function showStudent($id) { return view('admin.students.show', ['student' => Student::findOrFail($id)]); }
     public function editStudent($id) { return view('admin.students.edit', ['student' => Student::findOrFail($id)]); }
     public function updateStudent(Request $r, $id) { /* ... */ }
     public function deleteStudent($id) { /* ... */ }
 
     // --- CRUD for Opportunities ---
-    public function opportunities() { return view('admin.opportunities.index', ['opportunities' => Opportunity::all()]); }
+    /**
+     * Show paginated list of opportunities for admin view.
+     * Uses Eloquent pagination for correct numbering and navigation.
+     */
+    /**
+     * Show paginated and filtered list of opportunities for admin view.
+     * Supports search by title, organization, and filter by type/organization.
+     */
+    public function opportunities(Request $r) {
+        $query = Opportunity::with('organization');
+        if ($r->filled('search')) {
+            $search = $r->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%$search%")
+                  ->orWhereHas('organization', function($qu) use ($search) {
+                      $qu->where('name', 'like', "%$search%") ;
+                  });
+            });
+        }
+        if ($r->filled('type')) {
+            $query->where('type', $r->input('type'));
+        }
+        if ($r->filled('organization')) {
+            $query->whereHas('organization', function($q) use ($r) {
+                $q->where('name', $r->input('organization'));
+            });
+        }
+        $opportunities = $query->paginate(10)->appends($r->except('page'));
+        return view('admin.opportunities.index', compact('opportunities'));
+    }
     public function showOpportunity($id) { return view('admin.opportunities.show', ['opportunity' => Opportunity::findOrFail($id)]); }
     public function editOpportunity($id) { return view('admin.opportunities.edit', ['opportunity' => Opportunity::findOrFail($id)]); }
     public function updateOpportunity(Request $r, $id) { /* ... */ }
     public function deleteOpportunity($id) { /* ... */ }
 
     // --- CRUD for Applications ---
-    public function applications() { return view('admin.applications.index', ['applications' => Application::all()]); }
+    /**
+     * Show paginated list of applications for admin view.
+     * Uses Eloquent pagination for correct numbering and navigation.
+     */
+    /**
+     * Show paginated and filtered list of applications for admin view.
+     * Supports search by student, opportunity, and filter by status.
+     */
+    public function applications(Request $r) {
+        $query = Application::with(['student.user', 'opportunity']);
+        if ($r->filled('search')) {
+            $search = $r->input('search');
+            $query->where(function($q) use ($search) {
+                $q->whereHas('student.user', function($qu) use ($search) {
+                    $qu->where('name', 'like', "%$search%") ;
+                })
+                ->orWhereHas('opportunity', function($qu) use ($search) {
+                    $qu->where('title', 'like', "%$search%") ;
+                });
+            });
+        }
+        if ($r->filled('status')) {
+            $query->where('status', $r->input('status'));
+        }
+        $applications = $query->paginate(10)->appends($r->except('page'));
+        return view('admin.applications.index', compact('applications'));
+    }
     public function showApplication($id) { return view('admin.applications.show', ['application' => Application::findOrFail($id)]); }
     public function editApplication($id) { return view('admin.applications.edit', ['application' => Application::findOrFail($id)]); }
     public function updateApplication(Request $r, $id) { /* ... */ }
     public function deleteApplication($id) { /* ... */ }
 
     // --- CRUD for Notifications ---
-    public function notifications() { return view('admin.notifications.index', ['notifications' => Notification::all()]); }
+    /**
+     * Show paginated list of notifications for admin view.
+     * Uses Eloquent pagination for correct numbering and navigation.
+     */
+    /**
+     * Show paginated and filtered list of notifications for admin view.
+     * Supports search by recipient, message, and filter by type.
+     */
+    public function notifications(Request $r) {
+        $query = Notification::with('notifiable');
+        if ($r->filled('search')) {
+            $search = $r->input('search');
+            $query->where(function($q) use ($search) {
+                $q->whereHas('notifiable', function($qu) use ($search) {
+                    $qu->where('name', 'like', "%$search%") ;
+                })
+                ->orWhere('data->message', 'like', "%$search%") ;
+            });
+        }
+        if ($r->filled('type')) {
+            $query->where('type', $r->input('type'));
+        }
+        $notifications = $query->paginate(10)->appends($r->except('page'));
+        return view('admin.notifications.index', compact('notifications'));
+    }
     public function showNotification($id) { return view('admin.notifications.show', ['notification' => Notification::findOrFail($id)]); }
     public function editNotification($id) { return view('admin.notifications.edit', ['notification' => Notification::findOrFail($id)]); }
     public function updateNotification(Request $r, $id) { /* ... */ }
     public function deleteNotification($id) { /* ... */ }
 
     // --- CRUD for Activities ---
-    public function activities() { return view('admin.activities.index', ['activities' => Activity::all()]); }
+    /**
+     * Show paginated list of activities for admin view.
+     * Uses Eloquent pagination for correct numbering and navigation.
+     */
+    /**
+     * Show paginated and filtered list of activities for admin view.
+     * Supports search by user, target, and filter by action.
+     */
+    public function activities(Request $r) {
+        $query = Activity::with('user');
+        if ($r->filled('search')) {
+            $search = $r->input('search');
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($qu) use ($search) {
+                    $qu->where('name', 'like', "%$search%") ;
+                })
+                ->orWhere('target_type', 'like', "%$search%")
+                ->orWhere('target_id', 'like', "%$search%") ;
+            });
+        }
+        if ($r->filled('action')) {
+            $query->where('action', $r->input('action'));
+        }
+        $activities = $query->paginate(10)->appends($r->except('page'));
+        return view('admin.activities.index', compact('activities'));
+    }
     public function showActivity($id) { return view('admin.activities.show', ['activity' => Activity::findOrFail($id)]); }
     public function editActivity($id) { return view('admin.activities.edit', ['activity' => Activity::findOrFail($id)]); }
     public function updateActivity(Request $r, $id) { /* ... */ }

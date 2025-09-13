@@ -296,9 +296,11 @@
                                 <a href="/applications" class="nav-link">Applications</a>
                                 <a href="/students" class="nav-link">Find Students</a>
                             @elseif(auth()->user()->role === 'student')
-                                <a href="/opportunities" class="nav-link">Browse Opportunities</a>
-                                <a href="/applications" class="nav-link">My Applications</a>
-                                <a href="/organizations" class="nav-link">Organizations</a>
+                                <!-- <a href="/opportunities" class="nav-link">Listings</a> -->
+                                <a href="/organizations" class="nav-link">Opportunities</a>
+                                <a href="/student/applications" class="nav-link">My Applications</a>
+                                <a href="/student/interviews" class="nav-link">My Interviews</a>
+                                <a href="/student/placements" class="nav-link">My Placements</a>
                             @endif
                             <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
                         @else
@@ -346,9 +348,10 @@
                         <a href="/applications" class="dropdown-link">Applications</a>
                         <a href="/students" class="dropdown-link">Find Students</a>
                     @elseif(auth()->user()->role === 'student')
-                        <a href="/opportunities" class="dropdown-link">Browse Opportunities</a>
-                        <a href="/applications" class="dropdown-link">My Applications</a>
-                        <a href="/organizations" class="dropdown-link">Organizations</a>
+                        <a href="/organizations" class="dropdown-link">Opportunities</a>
+                        <a href="/student/applications" class="dropdown-link">My Applications</a>
+                        <a href="/student/interviews" class="dropdown-link">My Interviews</a>
+                        <a href="/student/placements" class="dropdown-link">My Placements</a>
                     @endif
                     <a href="/dashboard" class="btn btn-primary" style="width: 100%; text-align: center;">Back to Dashboard</a>
                 @endauth

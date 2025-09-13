@@ -258,7 +258,7 @@
                         <a href="/register" class="nav-link">Sign Up</a>
                     @endguest
                     @auth
-                            <a href="/dashboard" class="nav-link btn-secondary">Dashboard</a>
+                        <a href="/dashboard" class="nav-link btn-secondary">Dashboard</a>
                         @if($role === 'admin')
                             <a href="/admin/organizations" class="nav-link">Organizations</a>
                             <a href="/admin/students" class="nav-link">Students</a>
@@ -271,11 +271,12 @@
                             <a href="/opportunities/create" class="nav-link">Post Opportunity</a>
                             <a href="/applications" class="nav-link">Applications</a>
                             <a href="/students" class="nav-link">Find Students</a>
-                        @elseif($role === 'student')
-                            <a href="/student/dashboard" class="nav-link">Student Dashboard</a>
-                            <a href="/opportunities" class="nav-link">Browse Opportunities</a>
-                            <a href="/applications" class="nav-link">My Applications</a>
                             <a href="/organizations" class="nav-link">Organizations</a>
+                        @elseif($role === 'student')
+                            <a href="/student/applications" class="nav-link">My Applications</a>
+                            <a href="/student/interviews" class="nav-link">My Interviews</a>
+                            <a href="/student/placements" class="nav-link">My Placements</a>
+                            <a href="/organizations" class="nav-link">Opportunities</a>
                         @endif
                     @endauth
                 </div>
@@ -354,11 +355,12 @@
                     <a href="/opportunities/create" class="mobile-nav-link">Post Opportunity</a>
                     <a href="/applications" class="mobile-nav-link">Applications</a>
                     <a href="/students" class="mobile-nav-link">Find Students</a>
-                @elseif($role === 'student')
-                    <a href="/student/dashboard" class="mobile-nav-link">Student Dashboard</a>
-                    <a href="/opportunities" class="mobile-nav-link">Browse Opportunities</a>
-                    <a href="/applications" class="mobile-nav-link">My Applications</a>
                     <a href="/organizations" class="mobile-nav-link">Organizations</a>
+                @elseif($role === 'student')
+                        <a href="/organizations" class="dropdown-link">Opportunities</a>
+                    <a href="/student/applications" class="mobile-nav-link">My Applications</a>
+                    <a href="/student/interviews" class="mobile-nav-link">My Interviews</a>
+                    <a href="/student/placements" class="mobile-nav-link">My Placements</a>
                 @endif
             @endauth
         </div>

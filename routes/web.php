@@ -69,6 +69,11 @@ Route::middleware(['auth'])->group(function () {
         abort_unless($user && $user->role === 'student', 403);
         return app(\App\Http\Controllers\DashboardController::class)->studentDashboard();
     })->name('student.dashboard');
+    // Student dashboard metrics links
+    Route::get('/student/opportunities', [\App\Http\Controllers\StudentController::class, 'opportunities'])->name('student.opportunities');
+    Route::get('/student/applications', [\App\Http\Controllers\StudentController::class, 'applications'])->name('student.applications');
+    Route::get('/student/interviews', [\App\Http\Controllers\StudentController::class, 'interviews'])->name('student.interviews');
+    Route::get('/student/placements', [\App\Http\Controllers\StudentController::class, 'placements'])->name('student.placements');
 });
 
 Route::middleware(['auth'])->group(function () {
