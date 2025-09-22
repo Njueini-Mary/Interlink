@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .toast-container {
+        z-index: 2147483647; /* Set to the maximum possible value */
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
   <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-lg">

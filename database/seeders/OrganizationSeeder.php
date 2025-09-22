@@ -18,6 +18,12 @@ class OrganizationSeeder extends Seeder
             // Only keep valid UUIDs
             return preg_match('/^[0-9a-fA-F-]{36}$/', $id);
         })->values()->toArray();
+
+        if (empty($orgUsers)) {
+            $this->command->warn('No users with the role "organization" found. Ensure UserSeeder is run first.');
+            return;
+        }
+
         $count = min(2, count($orgUsers));
         for ($i = 0; $i < $count; $i++) {
             $orgId = (string) \Illuminate\Support\Str::uuid();

@@ -12,12 +12,15 @@ class NotificationSeeder extends Seeder
     {
         $users = User::all();
         foreach ($users as $user) {
-            Notification::factory()->count(2)->create([
-                'user_id' => $user->id,
-                'type' => 'info',
-                'title' => 'Welcome',
-                'message' => 'Welcome to the system!',
-            ]);
+            for ($i = 0; $i < 2; $i++) {
+                Notification::create([
+                    'id' => (string) \Illuminate\Support\Str::uuid(), // Ensure unique UUID for each record
+                    'user_id' => $user->id,
+                    'type' => 'info',
+                    'title' => 'Welcome',
+                    'message' => 'Welcome to the system!',
+                ]);
+            }
         }
     }
 }

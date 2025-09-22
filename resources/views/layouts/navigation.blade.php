@@ -267,8 +267,8 @@
                             <a href="/admin/notifications" class="nav-link">Notifications</a>
                             <a href="/admin/activities" class="nav-link">Activities</a>
                         @elseif($role === 'organization')
-                            <a href="/opportunities" class="nav-link">My Opportunities</a>
-                            <a href="/opportunities/create" class="nav-link">Post Opportunity</a>
+                            <a href="/opportunities" class="nav-link">My Jobs</a>
+                            <a href="/opportunities/create" class="nav-link">Post Job</a>
                             <a href="/applications" class="nav-link">Applications</a>
                             <a href="/students" class="nav-link">Find Students</a>
                             <a href="/organizations" class="nav-link">Organizations</a>

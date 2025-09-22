@@ -41,4 +41,12 @@ class Notification extends Model
     {
         return $this->morphTo();
     }
+
+    /**
+     * Get the notifiable entity that the notification belongs to.
+     */
+    public function notifiable()
+    {
+        return $this->morphTo();
+    }
 }

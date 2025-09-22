@@ -1,5 +1,5 @@
-
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\OrganizationController;
@@ -8,6 +8,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MLController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ApplicationController;
 
 // Auth routes
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -43,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
     // User-facing application routes
     Route::get('/applications', [\App\Http\Controllers\ApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{id}', [\App\Http\Controllers\ApplicationController::class, 'show'])->name('applications.show');
+    Route::post('/student/applications', [\App\Http\Controllers\ApplicationController::class, 'store'])->name('student.applications.store');
 });
 
 
@@ -88,12 +91,11 @@ Route::get('/messages/create', [MessageController::class, 'create'])->name('mess
 
 // ML Matching
 Route::post('/ml/match-student', [MLController::class, 'matchStudent'])->name('ml.matchStudent');
-Route::middleware(['auth'])->group(function () {
-});
+Route::middleware(['auth'])->group(function () {});
 
 
 // Route for ML jobs
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     // Example: Route::get('/student/ml-opportunities', [StudentController::class, 'mlOpportunities'])->name('students.mlOpportunities');
     Route::get('/organization/ml-students', [OrganizationController::class, 'mlStudents'])->name('organizations.mlStudents');
 });
@@ -106,11 +108,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Users
     Route::get('/users', [$ctrl, 'users'])->name('users.index');
-    Route::get('/users/{id}', [$ctrl, 'showUser'])->name('users.show');
-    Route::get('/users/{id}/edit', [$ctrl, 'editUser'])->name('users.edit');
-    Route::post('/users/{id}/edit', [$ctrl, 'updateUser'])->name('users.update');
-    Route::delete('/users/{id}', [$ctrl, 'deleteUser'])->name('users.delete');
-
     // Organizations
     Route::get('/organizations', [$ctrl, 'organizations'])->name('organizations.index');
     Route::get('/organizations/create', [$ctrl, 'createOrganization'])->name('organizations.create');
@@ -131,8 +128,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/opportunities', [$ctrl, 'opportunities'])->name('opportunities.index');
     Route::get('/opportunities/{id}', [$ctrl, 'showOpportunity'])->name('opportunities.show');
     Route::get('/opportunities/{id}/edit', [$ctrl, 'editOpportunity'])->name('opportunities.edit');
-    Route::post('/opportunities/{id}/edit', [$ctrl, 'updateOpportunity'])->name('opportunities.update');
-    Route::delete('/opportunities/{id}', [$ctrl, 'deleteOpportunity'])->name('opportunities.delete');
+    Route::put('/opportunities/{id}/edit', [$ctrl, 'updateOpportunity'])->name('opportunities.update');
+    Route::delete('/opportunities/{id}', [$ctrl, 'deleteOpportunity'])->name('opportunities.destroy');
 
     // Applications
     Route::get('/applications', [$ctrl, 'applications'])->name('applications.index');
@@ -154,6 +151,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/activities/{id}/edit', [$ctrl, 'editActivity'])->name('activities.edit');
     Route::post('/activities/{id}/edit', [$ctrl, 'updateActivity'])->name('activities.update');
     Route::delete('/activities/{id}', [$ctrl, 'deleteActivity'])->name('activities.delete');
-});
 
+    // Admin user routes
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+});
+Route::post('/applications/{id}/approve', [ApplicationController::class, 'approve'])->name('applications.approve');
+Route::post('/applications/{id}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
 require __DIR__ . '/auth.php';

@@ -109,7 +109,7 @@
               <label for="monthly_stipend" class="form-label">Monthly Stipend</label>
               <input type="number" step="0.01" class="form-control" id="monthly_stipend" name="monthly_stipend" placeholder="E.g., 5000" value="{{ old('monthly_stipend') }}">
             </div>
-            <div id="hourlyRateFields" class="row" style="{{ old('compensation_type') === 'hourly' ? '' : 'display:none;' }}">
+            <div id="hourlyRateFields" class="row {{ old('compensation_type') === 'hourly' ? '' : 'd-none' }}">
               <div class="col-6">
                 <label for="min_rate" class="form-label">Min Rate (hr)</label>
                 <input type="number" step="0.01" class="form-control" id="min_rate" name="min_rate" placeholder="E.g., 100" value="{{ old('min_rate') }}">
@@ -128,20 +128,22 @@
           const hourlyRadio = document.getElementById('comp_type_hourly');
           const stipendField = document.getElementById('stipendField');
           const hourlyFields = document.getElementById('hourlyRateFields');
+
           function toggleFields() {
             if (monthlyRadio.checked) {
               stipendField.style.display = '';
-              hourlyFields.style.display = 'none';
-            } else {
+              hourlyFields.classList.add('d-none');
+            } else if (hourlyRadio.checked) {
               stipendField.style.display = 'none';
-              hourlyFields.style.display = '';
+              hourlyFields.classList.remove('d-none');
             }
           }
+
           monthlyRadio.addEventListener('change', toggleFields);
           hourlyRadio.addEventListener('change', toggleFields);
           toggleFields();
         });
-      </script>
+        </script>
 
       <!-- Deadline & New Category -->
       <div class="row g-4 mb-3">
@@ -178,32 +180,6 @@
         </div>
       </div>
     </div>
-
-  <!-- JavaScript to toggle pricing fields -->
-  <script>
-    const jobTypeRadios = document.querySelectorAll('input[name="job_type"]');
-    const fixedPriceField = document.getElementById('fixedPriceField');
-    const hourlyRateFields = document.getElementById('hourlyRateFields');
-
-    function updatePricingFields() {
-      const selectedType = document.querySelector('input[name="job_type"]:checked').value;
-      if(selectedType === 'hourly'){
-        fixedPriceField.style.display = 'none';
-        hourlyRateFields.style.display = 'flex';
-      } else {
-        fixedPriceField.style.display = 'block';
-        hourlyRateFields.style.display = 'none';
-      }
-    }
-
-    jobTypeRadios.forEach(radio => {
-      radio.addEventListener('change', updatePricingFields);
-    });
-
-    if(document.querySelector('input[name="job_type"]:checked')){
-      updatePricingFields();
-    }
-  </script>
 
   <!-- Bootstrap JS Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

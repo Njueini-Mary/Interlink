@@ -11,6 +11,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Custom styles -->
   <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+  <style>
+    .toast-container {
+      z-index: 2147483647;
+      /* Set to the maximum possible value */
+    }
+  </style>
 </head>
 
 <body>

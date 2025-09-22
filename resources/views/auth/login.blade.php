@@ -87,6 +87,11 @@
                         Forgot your password?
                     </a>
                 @endif
+
+                <!-- Register Button -->
+                <a class="text-sm text-indigo-600 hover:text-indigo-800" href="{{ route('register') }}">
+                    Register
+                </a>
             </div>
 
                 <button type="submit"

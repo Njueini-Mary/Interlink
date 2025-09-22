@@ -102,8 +102,9 @@ class RegisteredUserController extends Controller
                     'website'      => $request->website,
                     'contact_email'=> $request->email,
                     'contact_phone'=> $request->contact_phone,
+                    'user_id'      => $user->id, // Associate the user_id with the organization
                 ]);
-                Log::info('Organization created', ['organization_id' => $organization->id]);
+                Log::info('Organization created', ['organization_id' => $organization->id, 'user_id' => $user->id]);
             } elseif ($request->role === 'student') {
                 // Handle student resume upload
                 $resumePath = null;

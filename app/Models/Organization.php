@@ -98,6 +98,7 @@ class Organization extends Model
         'rating',
         'rating_count',
         'metadata',
+        'user_id', // Added user_id to allow mass assignment
     ];
 
     /**

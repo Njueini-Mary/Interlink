@@ -10,6 +10,8 @@ use App\Models\Opportunity;
 use App\Models\Application;
 use App\Models\Notification;
 use App\Models\Activity;
+use App\Models\Skill;
+use App\Models\Category;
 
 /**
  * AdminController
@@ -51,9 +53,17 @@ class AdminController extends Controller
     /** Edit user. */
     public function editUser($id) { return view('admin.users.edit', ['user' => User::findOrFail($id)]); }
     /** Update user. */
-    public function updateUser(Request $r, $id) { /* ... */ }
+    public function updateUser(Request $r, $id) {
+        $user = User::findOrFail($id);
+        $user->update($r->all());
+        return redirect()->route('admin.users.show', $user->id)->with('success', 'User updated successfully.');
+    }
     /** Delete user. */
-    public function deleteUser($id) { /* ... */ }
+    public function deleteUser($id) {
+        $user = User::findOrFail($id);
+        $user->delete();
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
+    }
 
     // --- CRUD for Organizations ---
     /**
@@ -163,8 +173,16 @@ class AdminController extends Controller
     }
     public function showStudent($id) { return view('admin.students.show', ['student' => Student::findOrFail($id)]); }
     public function editStudent($id) { return view('admin.students.edit', ['student' => Student::findOrFail($id)]); }
-    public function updateStudent(Request $r, $id) { /* ... */ }
-    public function deleteStudent($id) { /* ... */ }
+    public function updateStudent(Request $r, $id) {
+        $student = Student::findOrFail($id);
+        $student->update($r->all());
+        return redirect()->route('admin.students.show', $student->id)->with('success', 'Student updated successfully.');
+    }
+    public function deleteStudent($id) {
+        $student = Student::findOrFail($id);
+        $student->delete();
+        return redirect()->route('admin.students.index')->with('success', 'Student deleted successfully.');
+    }
 
     // --- CRUD for Opportunities ---
     /**
@@ -198,8 +216,30 @@ class AdminController extends Controller
         return view('admin.opportunities.index', compact('opportunities'));
     }
     public function showOpportunity($id) { return view('admin.opportunities.show', ['opportunity' => Opportunity::findOrFail($id)]); }
-    public function editOpportunity($id) { return view('admin.opportunities.edit', ['opportunity' => Opportunity::findOrFail($id)]); }
-    public function updateOpportunity(Request $r, $id) { /* ... */ }
+    public function editOpportunity($id)
+    {
+        $opportunity = Opportunity::with(['organization', 'skills', 'category'])->findOrFail($id);
+        $skills = Skill::all();
+        $organizations = Organization::all();
+        $categories = Category::all();
+
+        return view('admin.opportunities.edit', [
+            'opportunity' => $opportunity,
+            'skills' => $skills,
+            'organizations' => $organizations,
+            'categories' => $categories,
+            'showId' => false, // Added to control ID visibility
+        ]);
+    }
+    public function updateOpportunity(Request $request, $id)
+    {
+        $opportunity = Opportunity::findOrFail($id);
+
+        $opportunity->update($request->only(['title', 'type', 'description']));
+
+        return redirect()->route('opportunities.show', $opportunity->id)
+                         ->with('success', 'Opportunity updated successfully.');
+    }
     public function deleteOpportunity($id) { /* ... */ }
 
     // --- CRUD for Applications ---
@@ -232,8 +272,16 @@ class AdminController extends Controller
     }
     public function showApplication($id) { return view('admin.applications.show', ['application' => Application::findOrFail($id)]); }
     public function editApplication($id) { return view('admin.applications.edit', ['application' => Application::findOrFail($id)]); }
-    public function updateApplication(Request $r, $id) { /* ... */ }
-    public function deleteApplication($id) { /* ... */ }
+    public function updateApplication(Request $r, $id) {
+        $application = Application::findOrFail($id);
+        $application->update($r->all());
+        return redirect()->route('admin.applications.show', $application->id)->with('success', 'Application updated successfully.');
+    }
+    public function deleteApplication($id) {
+        $application = Application::findOrFail($id);
+        $application->delete();
+        return redirect()->route('admin.applications.index')->with('success', 'Application deleted successfully.');
+    }
 
     // --- CRUD for Notifications ---
     /**
@@ -263,8 +311,16 @@ class AdminController extends Controller
     }
     public function showNotification($id) { return view('admin.notifications.show', ['notification' => Notification::findOrFail($id)]); }
     public function editNotification($id) { return view('admin.notifications.edit', ['notification' => Notification::findOrFail($id)]); }
-    public function updateNotification(Request $r, $id) { /* ... */ }
-    public function deleteNotification($id) { /* ... */ }
+    public function updateNotification(Request $r, $id) {
+        $notification = Notification::findOrFail($id);
+        $notification->update($r->all());
+        return redirect()->route('admin.notifications.show', $notification->id)->with('success', 'Notification updated successfully.');
+    }
+    public function deleteNotification($id) {
+        $notification = Notification::findOrFail($id);
+        $notification->delete();
+        return redirect()->route('admin.notifications.index')->with('success', 'Notification deleted successfully.');
+    }
 
     // --- CRUD for Activities ---
     /**
@@ -295,6 +351,14 @@ class AdminController extends Controller
     }
     public function showActivity($id) { return view('admin.activities.show', ['activity' => Activity::findOrFail($id)]); }
     public function editActivity($id) { return view('admin.activities.edit', ['activity' => Activity::findOrFail($id)]); }
-    public function updateActivity(Request $r, $id) { /* ... */ }
-    public function deleteActivity($id) { /* ... */ }
+    public function updateActivity(Request $r, $id) {
+        $activity = Activity::findOrFail($id);
+        $activity->update($r->all());
+        return redirect()->route('admin.activities.show', $activity->id)->with('success', 'Activity updated successfully.');
+    }
+    public function deleteActivity($id) {
+        $activity = Activity::findOrFail($id);
+        $activity->delete();
+        return redirect()->route('admin.activities.index')->with('success', 'Activity deleted successfully.');
+    }
 }

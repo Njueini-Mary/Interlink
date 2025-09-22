@@ -25,12 +25,14 @@ class Application extends Model
      * student_id: Foreign key to Student
      * cover_letter: Application letter
      * status: submitted/accepted/rejected
+     * resume: Application resume
      */
     protected $fillable = [
         'opportunity_id',
         'student_id',
         'cover_letter',
         'status',
+        'resume',
     ];
 
     /**

@@ -81,6 +81,7 @@ class Opportunity extends Model
         'max_hourly_rate',
         'compensation_type',
         'currency',
+        'user_id', // Added user_id to track the creator
     ];
 
     // Ensure deadline is cast to a date instance.
@@ -112,6 +113,21 @@ class Opportunity extends Model
         return $this->belongsToMany(Skill::class, 'opportunity_skill')->withTimestamps();
     }
 
+    /**
+     * Relationship: Opportunity belongs to a user (creator).
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get the user who posted the opportunity.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Scope to filter open opportunities.

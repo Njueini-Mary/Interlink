@@ -5,15 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Opportunity;
 use App\Models\Category;
 use App\Models\Skill;
+use App\Models\Organization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class OpportunityController extends Controller
 {
     /**
-     * Display a listing of opportunities, with optional search.
+     * Display a listing of opportunities, with optional search filters.
+     *
+     * @param Request $request The HTTP request containing search parameters.
+     * @return \Illuminate\View\View The view displaying the opportunities.
      */
     public function search(Request $request)
     {
@@ -38,13 +45,18 @@ class OpportunityController extends Controller
      */
     public function show($id)
     {
-        $opportunity = Opportunity::with('organization')->findOrFail($id);
-        $organization = $opportunity->organization;
-        return view('opportunities.show', compact('opportunity', 'organization'));
+        // Fetch the opportunity with all related details
+        $opportunity = Opportunity::with(['organization', 'category', 'skills', 'user'])
+            ->findOrFail($id);
+
+        return view('opportunities.show', compact('opportunity'));
     }
 
     /**
-     * Show the opportunity posting form.
+     * Show the form for creating a new opportunity.
+     *
+     * @param Request $request The HTTP request.
+     * @return \Illuminate\View\View The view for creating an opportunity.
      */
     public function create(Request $request)
     {
@@ -61,29 +73,8 @@ class OpportunityController extends Controller
     public function store(Request $request): RedirectResponse
     {
         // Validation rules:
-    $input = $request->all();
-    Log::info('Incoming request category_id', ['category_id' => $request->input('category_id'), 'input' => $input]);
-
-
-        // If a new category is provided, create it and set category_id to its UUID
-        if (!empty($input['new_category'])) {
-            $category = Category::firstOrCreate(
-                ['name' => $input['new_category']],
-                ['description' => '']
-            );
-            $input['category_id'] = $category->id;
-        }
-
-        // If category_id is empty or not a valid UUID, set to null
-        // Accept UUIDs with dashes and lowercase
-        if (empty($input['category_id']) || !preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $input['category_id'])) {
-            $input['category_id'] = null;
-        }
-
-        // Require at least one valid category
-        if (empty($input['category_id'])) {
-            return back()->withErrors(['category_id' => 'Please select a category or create a new one.'])->withInput();
-        }
+        $input = $request->all();
+        Log::info('Incoming request data', ['data' => $input]);
 
         $rules = [
             'currency'       => ['required', 'string', 'max:8'],
@@ -93,27 +84,27 @@ class OpportunityController extends Controller
             'deadline'      => ['required', 'date'],
             'compensation_type' => ['required', 'in:monthly,hourly'],
             'monthly_stipend'   => ['nullable', 'numeric', 'min:0', 'required_if:compensation_type,monthly'],
-            'min_hourly_rate'   => ['nullable', 'numeric', 'min:0', 'required_if:compensation_type,hourly'],
-            'max_hourly_rate'   => ['nullable', 'numeric', 'min:0', 'required_if:compensation_type,hourly'],
+            'min_rate'         => ['nullable', 'numeric', 'min:0', 'required_if:compensation_type,hourly'],
+            'max_rate'         => ['nullable', 'numeric', 'min:0', 'required_if:compensation_type,hourly'],
             'category_id'   => ['nullable', 'uuid', 'exists:categories,id'],
             'new_category'  => ['nullable', 'string'],
             'existing_skills' => ['nullable', 'array'],
+            'existing_skills.*' => ['uuid', 'exists:skills,id'], // Validate each skill ID
             'new_skills'      => ['nullable', 'string'],
         ];
 
         $validated = Validator::make($input, $rules)->validate();
 
-        // Get the organization for the current user (by user_id UUID)
-        $user = \Illuminate\Support\Facades\Auth::user();
-        Log::info('OpportunityController@store: user_id', ['user_id' => $user->id]);
-        $organization = \App\Models\Organization::where('user_id', $user->id)->first();
-        Log::info('OpportunityController@store: organization', ['organization' => $organization]);
-        if (!$organization || !preg_match('/^[0-9a-fA-F-]{36}$/', $organization->id)) {
-            Log::error('No valid organization found for user', ['user_id' => $user->id]);
-            return back()->withErrors(['organization_id' => 'No valid organization profile found for your account. Please contact support.'])->withInput();
+        // Wrap in a transaction to ensure data integrity
+        $user = Auth::user();
+        $organization = $user->organizationProfile; // Use direct relationship to fetch organization profile
+
+        if (!$organization) {
+            Log::error('No valid organization profile found for user.', ['userId' => $user->id]);
+            return back()->withErrors(['error' => 'No valid organization profile found. Please contact support.'])->withInput();
         }
-        // Create the opportunity
-        try {
+
+        $opportunity = DB::transaction(function () use ($validated, $organization, $request, $user) {
             $opportunity = Opportunity::create([
                 'organization_id'   => $organization->id,
                 'category_id'       => $validated['category_id'],
@@ -124,29 +115,134 @@ class OpportunityController extends Controller
                 'status'            => 'open',
                 'compensation_type' => $validated['compensation_type'],
                 'monthly_stipend'   => $validated['compensation_type'] === 'monthly' ? $validated['monthly_stipend'] : null,
-                'min_hourly_rate'   => $validated['compensation_type'] === 'hourly' ? $validated['min_hourly_rate'] : null,
-                'max_hourly_rate'   => $validated['compensation_type'] === 'hourly' ? $validated['max_hourly_rate'] : null,
+                'min_rate'          => $validated['compensation_type'] === 'hourly' ? $validated['min_rate'] : null,
+                'max_rate'          => $validated['compensation_type'] === 'hourly' ? $validated['max_rate'] : null,
                 'currency'          => $validated['currency'],
+                'user_id'           => $user->id, // Save the creator's user_id
             ]);
-            Log::info('Opportunity created', ['opportunity' => $opportunity, 'id' => $opportunity->id]);
-            if (!$opportunity || empty($opportunity->id) || $opportunity->id === 0) {
-                Log::error('Opportunity creation failed or ID is 0', ['opportunity' => $opportunity]);
-                return back()->withErrors(['opportunity' => 'Failed to create opportunity. Please try again or contact support.'])->withInput();
-            }
-        } catch (\Exception $e) {
-            Log::error('Opportunity creation exception', ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->withErrors(['opportunity' => 'Database error: ' . $e->getMessage()])->withInput();
-        }
 
-        // Attach skills if provided
-        if (!empty($request->input('existing_skills'))) {
-            $opportunity->skills()->attach($request->input('existing_skills'));
-        }
-        // Optionally handle new skills here
+            if ($request->filled('existing_skills')) {
+                Log::info('Attaching skills to opportunity', ['skills' => $request->input('existing_skills')]);
+                $opportunity->skills()->attach($request->input('existing_skills'));
+            }
+
+            if ($request->filled('new_skills')) {
+                $newSkills = explode(',', $request->input('new_skills'));
+                foreach ($newSkills as $skillName) {
+                    $skillName = trim($skillName);
+                    if (!empty($skillName)) {
+                        $skill = Skill::firstOrCreate(['name' => $skillName]);
+                        $opportunity->skills()->attach($skill->id);
+                        Log::info('Created and attached new skill', ['skill' => $skillName]);
+                    }
+                }
+            }
+
+            return $opportunity;
+        });
 
         return redirect()->route('opportunities.show', $opportunity->id)
-            ->with('success', 'Opportunity posted successfully.');
+            ->with('success', 'Opportunity posted successfully.'); // Return success toaster on opportunity creation
     }
 
-    // ...other methods (index, show, edit, update, destroy) should be similarly refactored...
+    /**
+     * Display opportunities based on user role.
+     */
+    public function index(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->role === 'organization') {
+            // Show only opportunities posted by the organization
+            $opportunities = Opportunity::where('organization_id', $user->organization_id)->paginate(10);
+        } elseif ($user->role === 'student') {
+            // Show all opportunities for students
+            $opportunities = Opportunity::paginate(10);
+        } else {
+            abort(403, 'Unauthorized action.');
+        }
+
+        return view('opportunities.index', compact('opportunities'));
+    }
+
+    /**
+     * Edit an opportunity (for organizations).
+     */
+    public function edit($id)
+    {
+        $user = Auth::user();
+
+        // Log the incoming request details
+        Log::info('Attempting to edit opportunity', ['id' => $id, 'user_id' => $user->id]);
+
+        try {
+            $opportunity = Opportunity::where('id', $id)
+                ->whereHas('organization', function ($query) use ($user) {
+                    $query->whereIn('id', $user->organizations->pluck('id'));
+                })
+                ->with('organization') // Eager load organization for debugging
+                ->firstOrFail();
+
+            Log::info('Opportunity found', [
+                'id' => $id,
+                'organization_ids' => $user->organizations->pluck('id'),
+                'opportunity_organization_id' => $opportunity->organization->id ?? null
+            ]);
+
+            return view('opportunities.edit', compact('opportunity'));
+        } catch (ModelNotFoundException $e) {
+            Log::error('Opportunity not found or unauthorized access', [
+                'id' => $id,
+                'user_id' => $user->id,
+                'organization_ids' => $user->organizations->pluck('id')
+            ]);
+
+            return abort(404, 'Opportunity not found or you do not have permission to edit it.');
+        }
+    }
+
+    /**
+     * Show the form for editing an opportunity.
+     */
+    public function editOpportunity($id)
+    {
+        $user = Auth::user();
+
+        // Ensure the user is an organization and owns the opportunity
+        $opportunity = Opportunity::where('id', $id)
+            ->where('organization_id', $user->organization_id)
+            ->firstOrFail();
+
+        return view('opportunities.edit', compact('opportunity'));
+    }
+
+    /**
+     * Update an opportunity (for organizations).
+     */
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+        $opportunity = Opportunity::where('id', $id)->where('organization_id', $user->organization_id)->firstOrFail();
+
+        Log::info('Updating opportunity', ['id' => $id, 'request_data' => $request->all()]);
+
+        $opportunity->update($request->all());
+
+        return redirect()->route('admin.opportunities.index')->with('status', 'Opportunity updated successfully.');
+    }
+
+    /**
+     * Delete an opportunity (for organizations).
+     */
+    public function destroy($id)
+    {
+        $user = Auth::user();
+        $opportunity = Opportunity::where('id', $id)->where('organization_id', $user->organization_id)->firstOrFail();
+
+        Log::info('Deleting opportunity', ['id' => $id, 'organization_id' => $user->organization_id]);
+
+        $opportunity->delete();
+
+        return redirect()->route('opportunities.index')->with('status', 'Opportunity deleted successfully.');
+    }
 }
