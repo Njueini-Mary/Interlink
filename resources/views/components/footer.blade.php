@@ -262,7 +262,7 @@
                         Interlink
                     </a>
                     <p class="footer-description">
-                        Connecting talented students with great organizations. Our platform makes it easy to find opportunities, manage applications, and build your career.
+                        Connecting skilled students with great organizations. Our platform makes it easy to find opportunities, manage applications, and build your career.
                     </p>
                     <div class="social-icons">
                         <a href="#" class="social-icon">

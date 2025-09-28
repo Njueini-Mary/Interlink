@@ -147,7 +147,7 @@
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-400">
                             {{-- organization logo placeholder --}}
-                            <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.png') }}" alt="logo" class="w-full h-full object-cover">
+                            <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.jpg') }}" alt="logo" class="w-full h-full object-cover">
                         </div>
                         <div>
                             <h4 class="text-md font-semibold text-gray-800" x-text="title || '{{ $opportunity->title }}'"></h4>

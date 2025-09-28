@@ -39,7 +39,7 @@
                                 <input id="email" name="email" type="email" autocomplete="username" required autofocus
                                              value="{{ old('email') }}"
                                              class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                             placeholder="Organization email (used for login)" />
+                                             placeholder="Enter email address" />
                 @error('email')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
