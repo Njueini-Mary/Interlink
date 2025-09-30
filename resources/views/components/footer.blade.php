@@ -281,7 +281,7 @@
                 </div>
 
                 <!-- Column 2: Freelancers -->
-                <div class="footer-column">
+                <!-- <div class="footer-column">
                     <h3 class="footer-heading">For Students</h3>
                     <div class="footer-links">
                         <a href="/opportunities" class="footer-link">Find Opportunities</a>
@@ -290,10 +290,10 @@
                         <a href="#" class="footer-link">Success Stories</a>
                         <a href="#" class="footer-link">Community</a>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Column 3: Clients -->
-                <div class="footer-column">
+                <!-- <div class="footer-column">
                     <h3 class="footer-heading">For Organizations</h3>
                     <div class="footer-links">
                         <a href="#" class="footer-link">How to Recruit</a>
@@ -302,10 +302,10 @@
                         <a href="#" class="footer-link">Organization Solutions</a>
                         <a href="#" class="footer-link">Organization Success Stories</a>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Column 4: Company -->
-                <div class="footer-column">
+                <!-- <div class="footer-column">
                     <h3 class="footer-heading">Company</h3>
                     <div class="footer-links">
                         <a href="#" class="footer-link">About Us</a>
@@ -315,7 +315,7 @@
                         <a href="#" class="footer-link">Blog</a>
                         <a href="#" class="footer-link">Contact Us</a>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Column 5: Contact & Newsletter -->
                 <!-- <div class="footer-column">
@@ -347,13 +347,13 @@
 
             <!-- Footer Bottom -->
             <div class="footer-bottom">
-                <p>© 2025 Interlink Placement System. All rights reserved.</p>
-                <div class="footer-bottom-links">
+                <p>© {{ date('Y') }} Interlink Placement System. All rights reserved.</p>
+                <!-- <div class="footer-bottom-links">
                     <a href="#" class="footer-bottom-link">Terms of Service</a>
                     <a href="#" class="footer-bottom-link">Privacy Policy</a>
                     <a href="#" class="footer-bottom-link">Cookie Policy</a>
                     <a href="#" class="footer-bottom-link">Accessibility</a>
-                </div>
+                </div> -->
             </div>
         </div>
     </footer>

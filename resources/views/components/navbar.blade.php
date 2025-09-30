@@ -271,7 +271,7 @@
             <div class="container">
                 <div class="nav-content">
                     <a href="/" class="logo">
-                        <i class="fas fa-lightbulb"></i>
+                        <!-- <i class="fas fa-lightbulb"></i> -->
                         Interlink
                     </a>
 

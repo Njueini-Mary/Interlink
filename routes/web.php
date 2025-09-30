@@ -10,6 +10,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MLController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\StudentController;
 
 // Auth routes
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -33,8 +34,8 @@ Route::middleware(['auth'])->group(function () {
 
 
 // User-facing student routes
-Route::get('/students', [\App\Http\Controllers\StudentController::class, 'index'])->name('students.index');
-Route::get('/students/{student}', [\App\Http\Controllers\StudentController::class, 'show'])->name('students.show');
+Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
 
 Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
 Route::get('/organizations/{organization}', [OrganizationController::class, 'show'])->name('organizations.show');
@@ -73,10 +74,10 @@ Route::middleware(['auth'])->group(function () {
         return app(\App\Http\Controllers\DashboardController::class)->studentDashboard();
     })->name('student.dashboard');
     // Student dashboard metrics links
-    Route::get('/student/opportunities', [\App\Http\Controllers\StudentController::class, 'opportunities'])->name('student.opportunities');
-    Route::get('/student/applications', [\App\Http\Controllers\StudentController::class, 'applications'])->name('student.applications');
-    Route::get('/student/interviews', [\App\Http\Controllers\StudentController::class, 'interviews'])->name('student.interviews');
-    Route::get('/student/placements', [\App\Http\Controllers\StudentController::class, 'placements'])->name('student.placements');
+    Route::get('/student/opportunities', [StudentController::class, 'opportunities'])->name('student.opportunities');
+    Route::get('/student/applications', [StudentController::class, 'applications'])->name('student.applications');
+    Route::get('/student/interviews', [StudentController::class, 'interviews'])->name('student.interviews');
+    Route::get('/student/placements', [StudentController::class, 'placements'])->name('student.placements');
 });
 
 Route::middleware(['auth'])->group(function () {

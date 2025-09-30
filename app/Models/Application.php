@@ -26,6 +26,8 @@ class Application extends Model
      * cover_letter: Application letter
      * status: submitted/accepted/rejected
      * resume: Application resume
+     * interests: Application interests
+     * gpa: Application GPA
      */
     protected $fillable = [
         'opportunity_id',
@@ -33,6 +35,8 @@ class Application extends Model
         'cover_letter',
         'status',
         'resume',
+        'interests',
+        'gpa',
     ];
 
     /**

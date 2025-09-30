@@ -23,8 +23,8 @@ class UserSeeder extends Seeder
             'id' => $adminId,
             'role' => 'admin',
             'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
+            'email' => 'john@gmail.com',
+            'password' => Hash::make('password123'),
         ]);
 
         // Organization users and records

@@ -26,7 +26,7 @@ class ApplicationController extends Controller
             }
             $applications = Application::whereHas('opportunity', function($q) use ($user) {
                 $q->where('organization_id', $user->organizationProfile->id);
-            })->with('student')->get();
+            })->with(['student', 'student.user'])->get();
             return view('applications.index', compact('applications'));
         }
         abort(403);
@@ -93,6 +93,8 @@ class ApplicationController extends Controller
         $application->opportunity_id = $validated['opportunity_id'];
         $application->student_id = Auth::user()->student->id; // Associate the application with the logged-in student.
         $application->cover_letter = $validated['cover_letter'];
+        $application->interests = $request->input('interest');
+        $application->gpa = $request->input('gpa');
 
         // Handle resume file upload if provided.
         if ($request->input('use_existing_resume') === '1') {

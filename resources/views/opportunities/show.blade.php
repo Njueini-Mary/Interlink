@@ -128,12 +128,20 @@
                                             <div class="modal-body">
                                                 <input type="hidden" name="opportunity_id" value="{{ $opportunity->id }}">
                                                 <div class="mb-3">
-                                                    <label for="coverLetter" class="form-label">Cover Letter</label>
-                                                    <textarea class="form-control" id="coverLetter" name="cover_letter" rows="4" required>{{ auth()->user()->student->cover_letter ?? '' }}</textarea>
+                                                    <label for="coverLetter" class="form-label">Cover Letter (optional)</label>
+                                                    <textarea class="form-control" id="coverLetter" name="cover_letter" rows="4" placeholder="Briefly explain why you are interested in this opportunity and how your skills match." >{{ auth()->user()->student->cover_letter ?? '' }}</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="interest" class="form-label">Interests (comma separated)</label>
+                                                    <input type="text" class="form-control" id="interest" name="interest" value="{{ auth()->user()->student->interest ?? '' }}" placeholder="e.g. Software Development, Data Science, AI" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="gpa" class="form-label">Current GPA</label>
+                                                    <input type="text" class="form-control" id="gpa" name="gpa" value="{{ auth()->user()->student->gpa ?? '' }}" placeholder="e.g. 3.8" required>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="resume" class="form-label">Resume</label>
-                                                    <input type="file" class="form-control" id="resume" name="resume">
+                                                    <input type="file" class="form-control" id="resume" name="resume" placeholder="Upload your resume in PDF format">
                                                     @if(auth()->user()->student && auth()->user()->student->resume)
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" id="useExistingResume" name="use_existing_resume" value="1" checked>

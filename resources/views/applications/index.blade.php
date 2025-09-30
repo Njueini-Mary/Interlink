@@ -12,92 +12,106 @@
             No applications found for your posted jobs.
         </div>
     @else
-        <div class="overflow-x-auto">
-            <table class="table-auto w-full border-collapse border border-gray-200 rounded-lg shadow-md">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-2 text-left text-gray-600 font-semibold">Applicant</th>
-                        <th class="px-4 py-2 text-left text-gray-600 font-semibold">Opportunity</th>
-                        <th class="px-4 py-2 text-left text-gray-600 font-semibold">Status</th>
-                        <th class="px-4 py-2 text-left text-gray-600 font-semibold">Submitted</th>
-                        <th class="px-4 py-2 text-left text-gray-600 font-semibold">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($applications as $application)
-                        <tr class="border-t border-gray-200 hover:bg-gray-50">
-                            <td class="px-4 py-2 text-gray-800">
-                                <a href="#" class="text-blue-600 hover:underline font-medium" data-bs-toggle="modal" data-bs-target="#applicantModal" data-applicant="{{ json_encode($application->student) }}">
-                                    {{ $application->student->user->name ?? 'N/A' }}
-                                </a>
-                            </td>
-                            <td class="px-4 py-2 text-gray-800">{{ $application->opportunity->title ?? '-' }}</td>
-                            <td class="px-4 py-2 text-gray-800">{{ ucfirst($application->status) }}</td>
-                            <td class="px-4 py-2 text-gray-800">{{ $application->created_at->format('M d, Y') }}</td>
-                            <td class="px-4 py-2">
-                                <a href="{{ route('applications.approve', $application->id) }}" class="text-green-600 hover:underline font-medium ml-4">Approve</a>
-                                <a href="{{ route('applications.reject', $application->id) }}" class="text-red-600 hover:underline font-medium ml-4">Reject</a>
-                            </td>
+        <div x-data="{ showModal: false, applicant: null }">
+            <div class="overflow-x-auto">
+                <table class="table-auto w-full border-collapse border border-gray-200 rounded-lg shadow-md">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Applicant</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Opportunity</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Status</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Submitted</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($applications as $application)
+                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                <td class="px-4 py-2 text-gray-800">
+                                    <a href="#" class="text-blue-600 hover:underline font-medium"
+                                        @click.prevent="showModal = true; applicant = {
+                                            ...{{ json_encode($application->student) }},
+                                            resume: '{{ $application->resume }}',
+                                            interests: '{{ $application->interests }}',
+                                            gpa: '{{ $application->gpa }}',
+                                            cover_letter: '{{ $application->cover_letter ?? '' }}'
+                                        }">
+                                        {{ $application->student->user->name ?? 'N/A' }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-2 text-gray-800">{{ $application->opportunity->title ?? '-' }}</td>
+                                <td class="px-4 py-2 text-gray-800">{{ ucfirst($application->status) }}</td>
+                                <td class="px-4 py-2 text-gray-800">{{ $application->created_at->format('M d, Y') }}</td>
+                                <td class="px-4 py-2">
+                                    <a href="{{ route('applications.approve', $application->id) }}" class="text-green-600 hover:underline font-medium ml-4">Approve</a>
+                                    <a href="{{ route('applications.reject', $application->id) }}" class="text-red-600 hover:underline font-medium ml-4">Reject</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modern Modal -->
+            <div x-show="showModal" style="display: none;" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl p-8 relative">
+                    <button @click="showModal = false" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+                    <h3 class="text-2xl font-bold mb-6 text-center text-indigo-700">Applicant Profile</h3>
+                    <template x-if="applicant">
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-600">Name:</p>
+                                    <p class="text-gray-800" x-text="applicant.user ? applicant.user.name : 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-600">Email:</p>
+                                    <p class="text-gray-800" x-text="applicant.user ? applicant.user.email : 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-600">University:</p>
+                                    <p class="text-gray-800" x-text="applicant.university || 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-600">Course:</p>
+                                    <p class="text-gray-800" x-text="applicant.course || 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-600">Year:</p>
+                                    <p class="text-gray-800" x-text="applicant.year || 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-600">Current GPA:</p>
+                                    <p class="text-gray-800" x-text="applicant.gpa || 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-600">Interests:</p>
+                                    <p class="text-gray-800" x-text="applicant.interests || 'N/A'"></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-600">Bio:</p>
+                                    <p class="text-gray-800" x-text="applicant.bio || 'N/A'"></p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-600">Cover Letter:</p>
+                                <p class="text-gray-800 whitespace-pre-line" x-text="applicant.cover_letter || 'N/A'"></p>
+                            </div>
+                            <template x-if="applicant.resume">
+                                <div>
+                                    <p class="font-semibold text-gray-600">Resume:</p>
+                                    <a :href="'/storage/' + applicant.resume" target="_blank" class="text-indigo-600 underline">View Resume</a>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <div class="flex justify-center mt-8">
+                        <button @click="showModal = false" class="px-6 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 font-semibold">Close</button>
+                    </div>
+                </div>
+            </div>
+            <!-- End Modal -->
         </div>
     @endif
 </div>
-
-<!-- Modal -->
-<div class="modal fade" id="applicantModal" tabindex="-1" aria-labelledby="applicantModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="applicantModalLabel">Applicant Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="applicantDetails">
-                    <!-- Dynamic content will be loaded here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const applicantModal = document.getElementById('applicantModal');
-        applicantModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const applicantData = button.getAttribute('data-applicant');
-
-            // Debugging: Log the button and data-applicant attribute
-            console.log('Button clicked:', button);
-            console.log('Applicant Data (raw):', applicantData);
-
-            // Ensure the data-applicant attribute is valid JSON
-            try {
-                const applicant = JSON.parse(applicantData);
-
-                // Debugging: Log the parsed applicant object
-                console.log('Parsed Applicant Object:', applicant);
-
-                const detailsContainer = document.getElementById('applicantDetails');
-                detailsContainer.innerHTML = `
-                    <p><strong>Name:</strong> ${applicant.user.name}</p>
-                    <p><strong>Email:</strong> ${applicant.user.email}</p>
-                    <p><strong>University:</strong> ${applicant.university || 'N/A'}</p>
-                    <p><strong>Course:</strong> ${applicant.course || 'N/A'}</p>
-                    <p><strong>Year:</strong> ${applicant.year || 'N/A'}</p>
-                    <p><strong>Resume:</strong> <a href="/${applicant.resume}" target="_blank">View Resume</a></p>
-                `;
-            } catch (error) {
-                console.error('Error parsing applicant data:', error);
-                alert('Failed to load applicant details. Please check the console for more information.');
-            }
-        });
-    });
-</script>
 @endsection
