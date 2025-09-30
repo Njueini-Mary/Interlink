@@ -34,8 +34,9 @@ class StudentController extends Controller
     // Show a single student
     public function show($id)
     {
-        $student = Student::with('user')->findOrFail($id);
-        return view('students.show', compact('student'));
+    $student = Student::with('user')->findOrFail($id);
+    $applications = $student->applications()->with('opportunity')->get();
+    return view('students.show', compact('student', 'applications'));
     }
 
     // Show student's active opportunities

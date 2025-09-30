@@ -149,7 +149,7 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title mb-0">{{ $opportunity->title }}</h5>
-                    <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.png') }}" 
+                    <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.jpg') }}" 
                         alt="{{ $opportunity->organization->name }}" 
                         class="rounded-circle" 
                         width="40" 
@@ -237,7 +237,7 @@
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-4">
                             <div class="position-relative me-3">
-                                <img src="{{ $organization->logo ? asset('storage/' . $organization->logo) : asset('images/default-organization.png') }}"
+                                <img src="{{ $organization->logo ? asset('storage/' . $organization->logo) : asset('images/default-organization.jpg') }}"
                                     class="rounded-circle object-fit-cover" width="70" height="70"
                                     alt="{{ $organization->name }}">
                                 @if($organization->is_verified)

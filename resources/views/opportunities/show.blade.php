@@ -65,7 +65,7 @@
                             <h1 class="card-title text-center">{{ $opportunity->title }}</h1>
                             <p class="card-subtitle text-muted text-center">
                                 <i class="fas fa-building me-1"></i> {{ $opportunity->organization->name }}
-                                <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.png') }}" 
+                                <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.jpg') }}" 
                                      alt="{{ $opportunity->organization->name }}" 
                                      class="rounded-circle mx-2" 
                                      width="40" 
