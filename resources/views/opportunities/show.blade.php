@@ -89,6 +89,16 @@
                                 @endforeach
                             </div>
                         </section>
+                        @if(auth()->user() && auth()->user()->role === 'student' && isset($opportunity->match_score))
+                        <section class="mt-4">
+                            <h5>ML Match Scores</h5>
+                            <div class="text-xs text-gray-700">
+                                <strong>TF-IDF:</strong> {{ round($opportunity->tfidf_score ?? 0) }}%
+                                <strong>LogReg:</strong> {{ round($opportunity->logreg_score ?? 0) }}%
+                                <strong>RF:</strong> {{ round($opportunity->rf_score ?? 0) }}%
+                            </div>
+                        </section>
+                        @endif
 
                         <footer class="mt-4 text-muted">
                             <div class="d-flex justify-content-between">

@@ -7,20 +7,35 @@
 	<h2 class="text-2xl font-bold mb-6 text-indigo-700">Application #{{ $application->id }}</h2>
 
 	<!-- Metrics Card -->
-	<div class="grid grid-cols-3 gap-4 mb-6">
-		<div class="bg-blue-50 rounded-lg px-4 py-2 text-center">
-			<span class="block text-lg font-bold text-blue-700">{{ $application->student->user->name ?? '-' }}</span>
-			<span class="text-xs text-gray-500">Student</span>
-		</div>
-		<div class="bg-indigo-50 rounded-lg px-4 py-2 text-center">
-			<span class="block text-lg font-bold text-indigo-700">{{ $application->opportunity->title ?? '-' }}</span>
-			<span class="text-xs text-gray-500">Opportunity</span>
-		</div>
-		<div class="bg-green-50 rounded-lg px-4 py-2 text-center">
-			<span class="block text-lg font-bold text-green-700">{{ ucfirst($application->status) }}</span>
-			<span class="text-xs text-gray-500">Status</span>
-		</div>
-	</div>
+	   <div class="grid grid-cols-4 gap-4 mb-6">
+		   <div class="bg-blue-50 rounded-lg px-4 py-2 text-center">
+			   <span class="block text-lg font-bold text-blue-700">{{ $application->student->user->name ?? '-' }}</span>
+			   <span class="text-xs text-gray-500">Student</span>
+		   </div>
+		   <div class="bg-indigo-50 rounded-lg px-4 py-2 text-center">
+			   <span class="block text-lg font-bold text-indigo-700">{{ $application->opportunity->title ?? '-' }}</span>
+			   <span class="text-xs text-gray-500">Opportunity</span>
+		   </div>
+		   <div class="bg-green-50 rounded-lg px-4 py-2 text-center">
+			   <span class="block text-lg font-bold text-green-700">{{ ucfirst($application->status) }}</span>
+			   <span class="text-xs text-gray-500">Status</span>
+		   </div>
+		   <div class="bg-purple-50 rounded-lg px-4 py-2 text-center">
+			   @if(isset($application->match_score))
+				   <span class="block text-lg font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">{{ round($application->match_score) }}%</span>
+				   <span class="text-xs text-gray-500">ML Match Score</span>
+				   <span class="block text-xs mt-1">
+					   @if($application->match_score >= 80) Excellent Match
+					   @elseif($application->match_score >= 60) Good Match
+					   @elseif($application->match_score >= 40) Moderate Match
+					   @else Low Match
+					   @endif
+				   </span>
+			   @else
+				   <span class="text-gray-400">N/A</span>
+			   @endif
+		   </div>
+	   </div>
 
 	<!-- Details Card -->
 	<div class="bg-white rounded-lg p-6 shadow mb-6">

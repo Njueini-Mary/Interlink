@@ -21,6 +21,7 @@
                             <th class="px-4 py-2 text-left text-gray-600 font-semibold">Opportunity</th>
                             <th class="px-4 py-2 text-left text-gray-600 font-semibold">Status</th>
                             <th class="px-4 py-2 text-left text-gray-600 font-semibold">Submitted</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Match Score</th>
                             <th class="px-4 py-2 text-left text-gray-600 font-semibold">Actions</th>
                         </tr>
                     </thead>
@@ -34,7 +35,12 @@
                                             resume: '{{ $application->resume }}',
                                             interests: '{{ $application->interests }}',
                                             gpa: '{{ $application->gpa }}',
-                                            cover_letter: '{{ $application->cover_letter ?? '' }}'
+                                            cover_letter: '{{ $application->cover_letter ?? '' }}',
+                                            student_skills: @json($application->student->skills->pluck('name')->toArray()),
+                                            opportunity_skills: @json($application->opportunity->skills->pluck('name')->toArray()),
+                                            tfidf_score: '{{ $application->tfidf_score ?? '' }}',
+                                            logreg_score: '{{ $application->logreg_score ?? '' }}',
+                                            rf_score: '{{ $application->rf_score ?? '' }}'
                                         }">
                                         {{ $application->student->user->name ?? 'N/A' }}
                                     </a>
@@ -42,6 +48,38 @@
                                 <td class="px-4 py-2 text-gray-800">{{ $application->opportunity->title ?? '-' }}</td>
                                 <td class="px-4 py-2 text-gray-800">{{ ucfirst($application->status) }}</td>
                                 <td class="px-4 py-2 text-gray-800">{{ $application->created_at->format('M d, Y') }}</td>
+                                <td class="px-4 py-2 text-gray-800">
+                                    @if(isset($application->match_score))
+                                        <span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
+                                            {{ round($application->match_score) }}%
+                                        </span>
+                                        <span class="text-xs text-gray-500 ml-2">
+                                            @if($application->match_score >= 80) Excellent Match
+                                            @elseif($application->match_score >= 60) Good Match
+                                            @elseif($application->match_score >= 40) Moderate Match
+                                            @else Low Match
+                                            @endif
+                                        </span>
+                                        <div class="mt-2 text-xs text-gray-700">
+                                            <strong>TF-IDF:</strong> {{ round($application->tfidf_score ?? 0) }}%
+                                            <strong>LogReg:</strong> {{ round($application->logreg_score ?? 0) }}%
+                                            <strong>RF:</strong> {{ round($application->rf_score ?? 0) }}%
+                                        </div>
+                                        <div class="mt-2 text-xs text-gray-700">
+                                            <strong>Applicant Skills:</strong> {{ implode(', ', $application->student->skills->pluck('name')->toArray()) }}<br>
+                                            <strong>Required Skills:</strong> {{ implode(', ', $application->opportunity->skills->pluck('name')->toArray()) }}
+                                        </div>
+                                        <form method="POST" action="{{ route('admin.applications.generate_match', $application->id) }}" class="mt-2">
+                                            @csrf
+                                            <button type="submit" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 text-xs">Regenerate Match</button>
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('admin.applications.generate_match', $application->id) }}">
+                                            @csrf
+                                            <button type="submit" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 text-xs">Generate Match</button>
+                                        </form>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-2">
                                     <a href="{{ route('applications.approve', $application->id) }}" class="text-green-600 hover:underline font-medium ml-4">Approve</a>
                                     <a href="{{ route('applications.reject', $application->id) }}" class="text-red-600 hover:underline font-medium ml-4">Reject</a>

@@ -17,14 +17,15 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class OpportunityController extends Controller
 {
     /**
-     * Display a listing of opportunities, with optional search filters.
+     * Display a listing of opportunities, with optional search filters and ML matching.
      *
      * @param Request $request The HTTP request containing search parameters.
      * @return \Illuminate\View\View The view displaying the opportunities.
      */
     public function search(Request $request)
     {
-        $query = Opportunity::query()->with('organization', 'category');
+        $query = Opportunity::query()->with('organization', 'category', 'skills');
+        
         if ($request->filled('q')) {
             $q = $request->input('q');
             $query->where('title', 'like', "%$q%")
@@ -33,10 +34,51 @@ class OpportunityController extends Controller
                       $org->where('name', 'like', "%$q%");
                   });
         }
+        
         if ($request->filled('category')) {
             $query->where('category_id', $request->input('category'));
         }
-        $opportunities = $query->latest()->paginate(10);
+        
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+        
+        $opportunities = $query->latest()->get();
+        
+        // Add ML match scores if user is a student
+        $user = Auth::user();
+        if ($user && $user->role === 'student' && $user->student) {
+            $matcher = new \App\Services\SkillMatcher();
+            $studentSkills = $user->student->skills->pluck('name')->toArray();
+            $studentProfile = $user->student->course . ' ' . ($user->student->academic_field ?? '');
+            
+            foreach ($opportunities as $opp) {
+                $oppSkills = $opp->skills->pluck('name')->toArray();
+                $oppProfile = $opp->title . ' ' . $opp->description;
+                $mlScores = $matcher->getMLScores(
+                    implode(' ', $studentSkills) . ' ' . $studentProfile,
+                    implode(' ', $oppSkills) . ' ' . $oppProfile
+                );
+                $opp->match_score = $mlScores['rf'];
+                $opp->tfidf_score = $mlScores['tfidf'];
+                $opp->logreg_score = $mlScores['logreg'];
+                $opp->rf_score = $mlScores['rf'];
+            }
+            
+            // Sort by match score if requested
+            if ($request->input('sort') === 'match') {
+                $opportunities = $opportunities->sortByDesc('match_score');
+            }
+        }
+        
+        $opportunities = new \Illuminate\Pagination\LengthAwarePaginator(
+            $opportunities->forPage($request->input('page', 1), 10),
+            $opportunities->count(),
+            10,
+            $request->input('page', 1),
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+        
         $categories = Category::all();
         return view('opportunities.index', compact('opportunities', 'categories'));
     }
@@ -48,7 +90,22 @@ class OpportunityController extends Controller
         // Fetch the opportunity with all related details
         $opportunity = Opportunity::with(['organization', 'category', 'skills', 'user'])
             ->findOrFail($id);
-
+        $user = Auth::user();
+        if ($user && $user->role === 'student' && $user->student) {
+            $matcher = new \App\Services\SkillMatcher();
+            $studentSkills = $user->student->skills->pluck('name')->toArray();
+            $studentProfile = $user->student->course . ' ' . ($user->student->academic_field ?? '');
+            $oppSkills = $opportunity->skills->pluck('name')->toArray();
+            $oppProfile = $opportunity->title . ' ' . $opportunity->description;
+            $mlScores = $matcher->getMLScores(
+                implode(' ', $studentSkills) . ' ' . $studentProfile,
+                implode(' ', $oppSkills) . ' ' . $oppProfile
+            );
+            $opportunity->match_score = $mlScores['rf'];
+            $opportunity->tfidf_score = $mlScores['tfidf'];
+            $opportunity->logreg_score = $mlScores['logreg'];
+            $opportunity->rf_score = $mlScores['rf'];
+        }
         return view('opportunities.show', compact('opportunity'));
     }
 

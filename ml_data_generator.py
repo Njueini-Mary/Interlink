@@ -1,32 +1,55 @@
+
 # ml_data_generator.py
 # Script to generate synthetic data for Interlink ML matching
-# Run: python ml_data_generator.py
+# Usage:
+#   python ml_data_generator.py
+#
+# Tuning Instructions:
+# - Adjust STUDENT_COUNT and OPPORTUNITY_COUNT below to increase or decrease dataset size.
+# - Add more skills and courses to the SKILLS and COURSES lists for greater diversity.
+# - After generating data, retrain your ML model for improved results.
+# - For best accuracy, ensure skills and courses reflect real-world data.
+
 
 from faker import Faker
 import random
 import pandas as pd
 
+
 fake = Faker()
 
-# Define skills and courses
-skills = ['Python', 'Data Science', 'Web Dev', 'AI', 'Marketing', 'Finance', 'Design', 'Project Management']
-courses = ['Computer Science', 'Business', 'Engineering', 'Design', 'Finance', 'Marketing']
-organizations = [fake.company() for _ in range(20)]
+# === Tuning Parameters ===
+STUDENT_COUNT = 1500   # Increase for more robust training
+OPPORTUNITY_COUNT = 600 # Increase for more robust training
+
+# === Skill and Course Diversity ===
+SKILLS = [
+    'Python', 'Data Science', 'Web Dev', 'AI', 'Marketing', 'Finance', 'Design', 'Project Management',
+    'SQL', 'Java', 'JavaScript', 'C++', 'Machine Learning', 'UI/UX', 'Cloud', 'Cybersecurity', 'Sales', 'Accounting', 'Leadership', 'Communication', 'Analytics', 'Creativity', 'Problem Solving'
+]
+COURSES = [
+    'Computer Science', 'Business', 'Engineering', 'Design', 'Finance', 'Marketing', 'Mathematics', 'Statistics', 'Information Technology', 'Economics', 'Psychology', 'Communications', 'Art', 'Physics', 'Biology'
+]
+organizations = [fake.company() for _ in range(40)]
 
 # Generate Students
-def generate_students(n=500):
+def generate_students(n=STUDENT_COUNT):
+    """
+    Generates synthetic student profiles for ML training.
+    Increase n for more data. Add skills/courses above for diversity.
+    """
     students = []
     for _ in range(n):
         students.append({
             'name': fake.name(),
             'email': fake.email(),
-            'skills': ', '.join(random.sample(skills, k=random.randint(2, 5))),
-            'course': random.choice(courses),
+            'skills': ', '.join(random.sample(SKILLS, k=random.randint(2, 5))),
+            'course': random.choice(COURSES),
             'year': random.randint(1, 4),
             'university': fake.company(),
-            'academic_field': random.choice(courses),
+            'academic_field': random.choice(COURSES),
             'bio': fake.sentence(),
-            'interests': ', '.join(random.sample(skills, k=3)),
+            'interests': ', '.join(random.sample(SKILLS, k=3)),
             'gpa': round(random.uniform(2.0, 4.0), 2),
             'is_available': random.choice([True, False]),
             'rating': round(random.uniform(3.0, 5.0), 2),
@@ -38,13 +61,17 @@ def generate_students(n=500):
     return students
 
 # Generate Opportunities
-def generate_opportunities(n=200):
+def generate_opportunities(n=OPPORTUNITY_COUNT):
+    """
+    Generates synthetic opportunity listings for ML training.
+    Increase n for more data. Add skills above for diversity.
+    """
     opportunities = []
     for _ in range(n):
         org = random.choice(organizations)
         opportunities.append({
             'title': fake.job(),
-            'skills': ', '.join(random.sample(skills, k=3)),
+            'skills': ', '.join(random.sample(SKILLS, k=3)),
             'type': random.choice(['Internship', 'Attachment', 'Volunteering']),
             'description': fake.text(max_nb_chars=200),
             'location': fake.city(),
@@ -71,7 +98,7 @@ def generate_organizations():
 
 # Generate Skills
 def generate_skills():
-    return [{'name': skill} for skill in skills]
+    return [{'name': skill} for skill in SKILLS]
 
 if __name__ == "__main__":
     students = generate_students()

@@ -29,6 +29,13 @@
                     <td>{{ $student->user->name }}</td>
                     <td>{{ $student->skills->pluck('name')->join(', ') }}</td>
                     <td>{{ $student->academic_level ?? $student->experience_level }}</td>
+                    @if(isset($student->match_score))
+                    <td>
+                        <strong>TF-IDF:</strong> {{ round($student->tfidf_score ?? 0) }}%<br>
+                        <strong>LogReg:</strong> {{ round($student->logreg_score ?? 0) }}%<br>
+                        <strong>RF:</strong> {{ round($student->rf_score ?? 0) }}%
+                    </td>
+                    @endif
                 </tr>
                 @endforeach
             </tbody>

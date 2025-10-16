@@ -231,16 +231,105 @@ class AdminController extends Controller
             'showId' => false, // Added to control ID visibility
         ]);
     }
+    /**
+     * Update an opportunity with validated data.
+     * 
+     * Admin can update opportunity details including title, type, description,
+     * skills, organization, category, and compensation information.
+     * 
+     * @param Request $request HTTP request containing opportunity data
+     * @param string $id UUID of the opportunity to update
+     * @return \Illuminate\Http\RedirectResponse Redirect to opportunity show page
+     */
     public function updateOpportunity(Request $request, $id)
     {
+        // Retrieve the opportunity by ID
         $opportunity = Opportunity::findOrFail($id);
 
-        $opportunity->update($request->only(['title', 'type', 'description']));
+        // Validate the incoming request data
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'in:WBL,SBL'],
+            'description' => ['required', 'string'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'deadline' => ['nullable', 'date'],
+            'status' => ['nullable', 'in:open,closed,filled'],
+            'compensation_type' => ['nullable', 'in:monthly,hourly'],
+            'monthly_stipend' => ['nullable', 'numeric', 'min:0'],
+            'min_hourly_rate' => ['nullable', 'numeric', 'min:0'],
+            'max_hourly_rate' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'max:8'],
+        ]);
 
+        // Update the opportunity with validated data
+        $opportunity->update($validated);
+
+        // Log the update action
+        \Illuminate\Support\Facades\Log::info('Admin updated opportunity', [
+            'opportunity_id' => $opportunity->id,
+            'admin_id' => auth()->id(),
+        ]);
+
+        // Redirect to the opportunity detail page with success message
         return redirect()->route('opportunities.show', $opportunity->id)
                          ->with('success', 'Opportunity updated successfully.');
     }
-    public function deleteOpportunity($id) { /* ... */ }
+
+    /**
+     * Delete an opportunity from the database.
+     * 
+     * Admin can permanently remove an opportunity. This action also removes
+     * associated applications and related records as per cascade rules.
+     * 
+     * @param string $id UUID of the opportunity to delete
+     * @return \Illuminate\Http\RedirectResponse Redirect to opportunities listing
+     */
+    public function deleteOpportunity($id)
+    {
+        try {
+            // Find the opportunity by ID
+            $opportunity = Opportunity::findOrFail($id);
+            
+            // Store opportunity title for logging and feedback
+            $opportunityTitle = $opportunity->title;
+            $opportunityId = $opportunity->id;
+
+            // Delete all applications associated with this opportunity
+            // Note: If you have cascade delete set in your database, this might be automatic
+            $applicationsCount = $opportunity->applications()->count();
+            $opportunity->applications()->delete();
+
+            // Detach all related skills (many-to-many relationship)
+            $opportunity->skills()->detach();
+
+            // Delete the opportunity itself
+            $opportunity->delete();
+
+            // Log the deletion activity for audit trail
+            \Illuminate\Support\Facades\Log::info('Admin deleted opportunity', [
+                'opportunity_id' => $opportunityId,
+                'opportunity_title' => $opportunityTitle,
+                'applications_deleted' => $applicationsCount,
+                'admin_id' => auth()->id(),
+                'deleted_at' => now(),
+            ]);
+
+            // Redirect to opportunities index with success message
+            return redirect()->route('admin.opportunities.index')
+                ->with('success', "Opportunity '{$opportunityTitle}' and {$applicationsCount} related applications deleted successfully.");
+
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Illuminate\Support\Facades\Log::error('Failed to delete opportunity', [
+                'opportunity_id' => $id,
+                'error' => $e->getMessage(),
+                'admin_id' => auth()->id(),
+            ]);
+
+            // Redirect back with error message
+            return back()->withErrors(['error' => 'Failed to delete opportunity. Please try again.']);
+        }
+    }
 
     // --- CRUD for Applications ---
     /**

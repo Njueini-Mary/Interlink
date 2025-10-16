@@ -10,78 +10,90 @@ use Phpml\Tokenization\WhitespaceTokenizer;
 class MLController extends Controller
 {
     /**
-     * Predict whether a freelancer-job pair is a good match.
+     * Match a student to suitable opportunities using ML-based skill matching.
+     * 
+     * This method analyzes the student's profile (skills, academic field, interests)
+     * and finds the most relevant opportunities using the SkillMatcher service.
      * 
      * Expected JSON payload fields:
-     * - job_category (string)
-     * - freelancer_skills (string, skills separated by pipe " | ")
-     * - experience_level (numeric)
-     * - client_rating (numeric)
-     * - job_budget (numeric)
-     * - job_deadline_days (numeric)
+     * - student_id (uuid): The ID of the student to match
+     * 
+     * Returns:
+     * - JSON array of matched opportunities with match scores
+     * 
+     * @param Request $request The incoming HTTP request containing student_id
+     * @return \Illuminate\Http\JsonResponse JSON response with matched opportunities
      */
-    public function matchFreelancer(Request $request)
+    public function matchStudent(Request $request)
     {
+        // Validate the incoming request to ensure student_id is provided
         $request->validate([
-            'job_category'       => 'required|string',
-            'freelancer_skills'  => 'required|string',
-            'experience_level'   => 'required|numeric',
-            'client_rating'      => 'required|numeric',
-            'job_budget'         => 'required|numeric',
-            'job_deadline_days'  => 'required|numeric',
+            'student_id' => 'required|uuid|exists:students,id',
         ]);
 
-        $modelFile = storage_path('app/ml/matching_model.json');
-        if (!file_exists($modelFile)) {
-            return response()->json(['error' => 'ML model not found. Please train the model first.'], 500);
+        try {
+            // Retrieve the student with their skills relationship
+            $student = \App\Models\Student::with('skills')->findOrFail($request->input('student_id'));
+            
+            // Get all open opportunities with their required skills
+            $opportunities = \App\Models\Opportunity::with('skills')
+                ->where('status', 'open')
+                ->get();
+
+            // Initialize the skill matcher service for ML-based matching
+            $matcher = new \App\Services\SkillMatcher();
+            
+            // Array to store opportunities with their match scores
+            $matchedOpportunities = [];
+            
+            // Extract student skills as an array of skill names
+            $studentSkills = $student->skills->pluck('name')->toArray();
+
+            // Iterate through each opportunity and calculate match score
+            foreach ($opportunities as $opportunity) {
+                // Extract required skills for the opportunity
+                $opportunitySkills = $opportunity->skills->pluck('name')->toArray();
+                
+                // Calculate match percentage using the ML matcher
+                $matchPercentage = $matcher->getMatchPercentage($opportunitySkills, $studentSkills);
+                
+                // Get binary prediction (1 for match, 0 for no match)
+                $prediction = $matcher->predictMatch($opportunitySkills, $studentSkills);
+                
+                // Only include opportunities with prediction = 1 (match)
+                if ($prediction === 1) {
+                    $matchedOpportunities[] = [
+                        'opportunity' => $opportunity,
+                        'match_percentage' => round($matchPercentage, 2),
+                        'matched_skills' => array_intersect($studentSkills, $opportunitySkills),
+                    ];
+                }
+            }
+
+            // Sort opportunities by match percentage in descending order
+            usort($matchedOpportunities, function($a, $b) {
+                return $b['match_percentage'] <=> $a['match_percentage'];
+            });
+
+            // Return the top 10 matched opportunities
+            return response()->json([
+                'success' => true,
+                'student_id' => $student->id,
+                'matches' => array_slice($matchedOpportunities, 0, 10),
+                'total_matches' => count($matchedOpportunities),
+            ]);
+
+        } catch (\Exception $e) {
+            // Log the error for debugging purposes
+            \Illuminate\Support\Facades\Log::error('ML Student Matching Error: ' . $e->getMessage());
+            
+            // Return error response
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while matching opportunities.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-        $modelData = json_decode(file_get_contents($modelFile), true);
-        $classifier    = unserialize($modelData['classifier']);
-        $vocabulary    = $modelData['vocabulary'];
-        $jobCategories = $modelData['jobCategories'];
-
-        // One-hot encode job_category using the known vocabulary.
-        $onehot = [];
-        foreach ($jobCategories as $cat) {
-            $onehot[] = ($request->input('job_category') === $cat) ? 1.0 : 0.0;
-        }
-
-        // Process freelancer_skills: convert from pipe-separated to space-separated.
-        $skillsStr = implode(' ', explode('|', $request->input('freelancer_skills')));
-        $vectorizer = new TokenCountVectorizer(new WhitespaceTokenizer());
-        // Set fixed vocabulary from the training stage.
-        $vectorizer->setVocabulary($vocabulary);
-        $skillsArray = [$skillsStr];
-        $vectorizer->transform($skillsArray);
-        $skillsVector = [];
-        // Build a fixed-length vector from the vocabulary order.
-        foreach ($vocabulary as $word => $dummy) {
-            $skillsVector[] = isset($skillsArray[0][$word]) ? (float)$skillsArray[0][$word] : 0.0;
-        }
-
-        // Numerical features:
-        $numerical = [
-            (float)$request->input('experience_level'),
-            (float)$request->input('client_rating'),
-            (float)$request->input('job_budget'),
-            (float)$request->input('job_deadline_days'),
-        ];
-
-        // Merge all features.
-        $sample = array_merge($onehot, $skillsVector, $numerical);
-
-        // Normalize the sample.
-        $normalizer = new Normalizer();
-        // For consistency, we fit the normalizer on the sample itself.
-        $normalizer->fit([$sample]);
-        $normalizer->transform([$sample]);
-        $sample = $sample[0];
-
-        // Predict.
-        $prediction = $classifier->predict([$sample]);
-
-        return response()->json([
-            'match' => $prediction[0]  // 1 indicates a good match, 0 indicates poor match.
-        ]);
     }
+
 }

@@ -40,21 +40,62 @@ class DashboardController extends Controller
         return view('about.index');
     }
     /**
-     * Show the student dashboard with stats and recent applications.
+     * Show the student dashboard with stats, recent applications, and ML-recommended opportunities.
      *
+     * This is the central feature for final year project: ML-based opportunity matching
+     * 
      * @return \Illuminate\View\View
      */
     public function studentDashboard()
     {
         $user = Auth::user();
-    $student = $user->student;
+        $student = $user->student;
+        
+        // Initialize ML matcher
+        $mlMatcher = new \App\Services\SkillMatcher();
+        
+        // Get ML-recommended opportunities for this student
+        $recommendedOpportunities = [];
+        $mlModelStatus = $mlMatcher->isMLModelAvailable();
+        
+        if ($student) {
+            // Get all open opportunities with skills loaded
+            $openOpportunities = \App\Models\Opportunity::where('status', 'open')
+                ->with(['skills', 'organization'])
+                ->get();
+            
+            // Get ML matches (top 5 for dashboard)
+            $allMatches = $mlMatcher->batchMatch($student, $openOpportunities);
+            $recommendedOpportunities = array_slice($allMatches, 0, 5);
+            
+            // Log ML matching for analytics
+            \Illuminate\Support\Facades\Log::info('Student Dashboard ML Matching', [
+                'student_id' => $student->id,
+                'total_opportunities' => $openOpportunities->count(),
+                'recommended_count' => count($recommendedOpportunities),
+                'ml_model_active' => $mlModelStatus
+            ]);
+        }
+        
+        // Compile dashboard data
         $data = [
+            // Stats
             'activeOpportunities' => \App\Models\Opportunity::where('status', 'open')->count(),
             'applicationsSubmitted' => $student ? $student->applications()->count() : 0,
             'interviewsScheduled' => $student ? $student->applications()->where('status', 'interview')->count() : 0,
             'placementsSecured' => $student ? $student->applications()->where('status', 'placed')->count() : 0,
+            
+            // Recent Applications
             'applications' => $student ? $student->applications()->with('opportunity.organization')->latest()->take(5)->get() : [],
+            
+            // ML Recommendations (Innovation for Defense)
+            'recommendedOpportunities' => $recommendedOpportunities,
+            'mlModelActive' => $mlModelStatus,
+            
+            // ML Model Info (for showcasing in defense)
+            'mlMetadata' => $mlMatcher->getModelMetadata(),
         ];
+        
         return view('dashboards.student', $data);
     }
 
@@ -67,13 +108,39 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $org = $user->organizationProfile;
-        $opportunities = $org ? $org->opportunities()->withCount('applications')->latest()->take(5)->get() : [];
+        $opportunities = $org ? $org->opportunities()->withCount('applications')->with('skills')->latest()->take(5)->get() : [];
+        
         $applications = collect();
+        $matcher = new \App\Services\SkillMatcher();
+        
         if ($org) {
             foreach ($opportunities as $opp) {
-                $applications = $applications->merge($opp->applications()->latest()->take(3)->get());
+                $oppApplications = $opp->applications()->with('student.skills')->latest()->take(10)->get();
+                
+                // Add ML match scores to applications
+                $oppSkills = $opp->skills->pluck('name')->toArray();
+                $oppProfile = $opp->title . ' ' . $opp->description;
+                
+                foreach ($oppApplications as $app) {
+                    if ($app->student) {
+                        $studentSkills = $app->student->skills->pluck('name')->toArray();
+                        $studentProfile = $app->student->course . ' ' . ($app->student->academic_field ?? '');
+                        
+                        $app->match_score = $matcher->getMatchPercentage(
+                            $oppSkills,
+                            $studentSkills,
+                            $studentProfile,
+                            $oppProfile
+                        );
+                    }
+                }
+                
+                // Sort by match score
+                $oppApplications = $oppApplications->sortByDesc('match_score');
+                $applications = $applications->merge($oppApplications->take(3));
             }
         }
+        
         $data = [
             'openOpportunities' => $org ? $org->opportunities()->where('status', 'open')->count() : 0,
             'placementsSecured' => $org ? $org->opportunities()->where('status', 'placed')->count() : 0,

@@ -22,3 +22,18 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Python virtual environment
+venv/
+.venv/
+
+# Model storage and generated files
+storage/ml_models/
+students.csv
+opportunities.csv
+organizations.csv
+skills.csv
+
+# Python cache
+*.pyc
+__pycache__/

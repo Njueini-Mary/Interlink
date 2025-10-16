@@ -88,6 +88,20 @@ document.addEventListener('DOMContentLoaded', function() {
 				<td class="px-4 py-2">{{ $opportunity->type }}</td>
 				<td class="px-4 py-2">
 					<a href="{{ route('admin.opportunities.show', $opportunity->id) }}" class="text-indigo-600 hover:underline">View</a>
+					@if(isset($opportunity->match_score))
+						<div class="mt-2">
+							<span class="font-bold {{ $opportunity->match_score >= 80 ? 'text-green-600' : ($opportunity->match_score >= 60 ? 'text-blue-600' : ($opportunity->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
+								{{ round($opportunity->match_score) }}% Match
+							</span>
+							<span class="text-xs text-gray-500 ml-2">
+								@if($opportunity->match_score >= 80) Excellent Match
+								@elseif($opportunity->match_score >= 60) Good Match
+								@elseif($opportunity->match_score >= 40) Moderate Match
+								@else Low Match
+								@endif
+							</span>
+						</div>
+					@endif
 				</td>
 			</tr>
 			@endforeach

@@ -162,4 +162,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 Route::post('/applications/{id}/approve', [ApplicationController::class, 'approve'])->name('applications.approve');
 Route::post('/applications/{id}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
+// Admin: Generate ML match score for application
+Route::post('/admin/applications/{id}/generate-match', [ApplicationController::class, 'generateMatch'])->name('admin.applications.generate_match');
 require __DIR__ . '/auth.php';

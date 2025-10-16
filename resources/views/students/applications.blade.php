@@ -13,6 +13,20 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach($applications as $application)
                 <div class="bg-white rounded-lg shadow-md p-6 flex flex-col justify-between">
+                    @if(isset($application->match_score))
+                        <div class="mb-2">
+                            <span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
+                                {{ round($application->match_score) }}% Match
+                            </span>
+                            <span class="text-xs text-gray-500 ml-2">
+                                @if($application->match_score >= 80) Excellent Match
+                                @elseif($application->match_score >= 60) Good Match
+                                @elseif($application->match_score >= 30) Moderate Match
+                                @else Low Match
+                                @endif
+                            </span>
+                        </div>
+                    @endif
                     <div class="flex items-center mb-4">
                         <div class="bg-green-100 rounded-full p-3 mr-4">
                             <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -27,6 +41,20 @@
                         <a href="{{ route('opportunities.show', $application->opportunity_id) }}" class="text-blue-600 hover:underline font-medium">View Opportunity</a>
                         <span class="text-sm text-gray-500">{{ $application->organization->name ?? 'N/A' }}</span>
                     </div>
+                    <div class="mb-2">
+                        <span class="font-bold text-gray-700">Your Skills:</span>
+                        <span class="text-sm text-gray-600">{{ implode(', ', $application->student->skills->pluck('name')->toArray() ?? []) }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="font-bold text-gray-700">Required Skills:</span>
+                        <span class="text-sm text-gray-600">{{ implode(', ', $application->opportunity->skills->pluck('name')->toArray() ?? []) }}</span>
+                    </div>
+                    @if(isset($application->ml_scores))
+                        <div class="mb-2">
+                            <span class="font-bold text-gray-700">ML Scores:</span>
+                            <span class="text-sm text-gray-600">TF-IDF: {{ $application->ml_scores['tfidf'] ?? 'N/A' }}%, Logistic Regression: {{ $application->ml_scores['logreg'] ?? 'N/A' }}%, Random Forest: {{ $application->ml_scores['rf'] ?? 'N/A' }}%</span>
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>

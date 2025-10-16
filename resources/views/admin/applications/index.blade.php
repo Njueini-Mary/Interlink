@@ -58,36 +58,51 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- Applications Table - Modern Card Layout -->
-<div class="bg-white rounded-lg shadow p-6">
-	<h2 class="text-2xl font-bold mb-4 text-indigo-700">All Applications</h2>
-	<table class="table-auto w-full">
+<div class="mb-6">
+	<table class="min-w-full bg-white rounded-lg shadow">
 		<thead>
-			<tr class="bg-gray-100">
-				<th class="px-4 py-2 text-left">#</th>
-				<th class="px-4 py-2 text-left">Student</th>
-				<th class="px-4 py-2 text-left">Opportunity</th>
-				<th class="px-4 py-2 text-left">Status</th>
-				<th class="px-4 py-2 text-left">Actions</th>
+			<tr>
+				<th class="px-4 py-2">ID</th>
+				<th class="px-4 py-2">Student</th>
+				<th class="px-4 py-2">Opportunity</th>
+				<th class="px-4 py-2">Status</th>
+				<th class="px-4 py-2">ML Match Score</th>
 			</tr>
 		</thead>
 		<tbody>
-			@foreach($applications as $i => $application)
-			<tr class="border-b">
-				<td class="px-4 py-2">{{ ($applications->currentPage() - 1) * $applications->perPage() + $i + 1 }}</td>
-				<td class="px-4 py-2">{{ $application->student->user->name ?? '-' }}</td>
-				<td class="px-4 py-2">{{ $application->opportunity->title ?? '-' }}</td>
-				<td class="px-4 py-2">{{ $application->status }}</td>
-				<td class="px-4 py-2">
-					<a href="{{ route('admin.applications.show', $application->id) }}" class="text-indigo-600 hover:underline">View</a>
+			@foreach($applications as $application)
+			<tr>
+				<td class="border px-4 py-2">{{ $application->id }}</td>
+				<td class="border px-4 py-2">{{ $application->student->user->name ?? '-' }}</td>
+				<td class="border px-4 py-2">{{ $application->opportunity->title ?? '-' }}</td>
+				<td class="border px-4 py-2">{{ ucfirst($application->status) }}</td>
+				<td class="border px-4 py-2">
+						@if(isset($application->match_score))
+							<span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
+								{{ round($application->match_score) }}%
+							</span>
+							<span class="text-xs text-gray-500 ml-2">
+								@if($application->match_score >= 80) Excellent Match
+								@elseif($application->match_score >= 60) Good Match
+								@elseif($application->match_score >= 40) Moderate Match
+								@else Low Match
+								@endif
+							</span>
+							<form method="POST" action="{{ route('admin.applications.generate_match', $application->id) }}" class="mt-2">
+								@csrf
+								<button type="submit" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 text-xs">Regenerate Match</button>
+							</form>
+						@else
+							<form method="POST" action="{{ route('admin.applications.generate_match', $application->id) }}">
+								@csrf
+								<button type="submit" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 text-xs">Generate Match</button>
+							</form>
+						@endif
 				</td>
 			</tr>
 			@endforeach
 		</tbody>
 	</table>
-	<!-- Pagination -->
-	<div class="mt-6 flex justify-center">
-		{{ $applications->links() }}
-	</div>
 </div>
 
 {{-- End of Applications Index View --}}
