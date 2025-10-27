@@ -11,6 +11,38 @@ use App\Models\Organization;
 class DashboardController extends Controller
 {
     /**
+     * Manually calculate ML match scores for organization dashboard applications.
+     */
+    public function calculateOrgMatches(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'organization' || !$user->organizationProfile) {
+            return redirect()->back()->with('error', 'Only organizations can calculate matches.');
+        }
+        $org = $user->organizationProfile;
+        $mlMatcher = new \App\Services\SkillMatcher();
+        $opportunities = $org->opportunities()->with(['skills', 'applications.student.skills'])->get();
+        foreach ($opportunities as $opp) {
+            $oppSkills = $opp->skills->pluck('name')->toArray();
+            $oppProfile = ($opp->title ?? '') . ' ' . ($opp->description ?? '');
+            foreach ($opp->applications as $app) {
+                if ($app->student) {
+                    $studentSkills = $app->student->skills->pluck('name')->toArray();
+                    $studentProfile = ($app->student->bio ?? '') . ' ' . ($app->student->interests ?? '') . ' ' . ($app->student->course ?? '') . ' ' . ($app->student->university ?? '');
+                    $studentText = implode(' ', $studentSkills) . ' ' . $studentProfile;
+                    $opportunityText = implode(' ', $oppSkills) . ' ' . $oppProfile;
+                    $mlScores = $mlMatcher->getMLScores($studentText, $opportunityText);
+                    $app->match_score = $mlScores['rf'];
+                    $app->tfidf_score = $mlScores['tfidf'];
+                    $app->logreg_score = $mlScores['logreg'];
+                    $app->rf_score = $mlScores['rf'];
+                    $app->save();
+                }
+            }
+        }
+        return redirect()->back()->with('success', 'ML matches calculated for organization dashboard!');
+    }
+    /**
      * Redirect user to their role-specific dashboard.
      *
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\View\View
@@ -64,9 +96,7 @@ class DashboardController extends Controller
                 ->with(['skills', 'organization'])
                 ->get();
             
-            // Get ML matches (top 5 for dashboard)
-            $allMatches = $mlMatcher->batchMatch($student, $openOpportunities);
-            $recommendedOpportunities = array_slice($allMatches, 0, 5);
+            // ML matches will be calculated manually via button
             
             // Log ML matching for analytics
             \Illuminate\Support\Facades\Log::info('Student Dashboard ML Matching', [
@@ -109,38 +139,43 @@ class DashboardController extends Controller
         $user = Auth::user();
         $org = $user->organizationProfile;
         $opportunities = $org ? $org->opportunities()->withCount('applications')->with('skills')->latest()->take(5)->get() : [];
-        
         $applications = collect();
         $matcher = new \App\Services\SkillMatcher();
-        
         if ($org) {
             foreach ($opportunities as $opp) {
-                $oppApplications = $opp->applications()->with('student.skills')->latest()->take(10)->get();
-                
-                // Add ML match scores to applications
-                $oppSkills = $opp->skills->pluck('name')->toArray();
-                $oppProfile = $opp->title . ' ' . $opp->description;
-                
+                $oppApplications = $opp->applications()->with(['student.skills', 'opportunity.skills'])->latest()->take(10)->get();
                 foreach ($oppApplications as $app) {
-                    if ($app->student) {
+                    // Add XAI fields if scores exist
+                    if ($app->student && isset($app->match_score)) {
+                        $oppSkills = $opp->skills->pluck('name')->toArray();
                         $studentSkills = $app->student->skills->pluck('name')->toArray();
-                        $studentProfile = $app->student->course . ' ' . ($app->student->academic_field ?? '');
-                        
-                        $app->match_score = $matcher->getMatchPercentage(
+                        $course = $app->student->course ?? '';
+                        $academicField = $app->student->academic_field ?? '';
+                        $gpa = $app->gpa ?? '';
+                        $interests = $app->interests ?? $app->student->interests ?? '';
+                        $app->matched_skills = $matcher->getMatchedSkills($oppSkills, $studentSkills);
+                        $app->missing_skills = $matcher->getMissingSkills($oppSkills, $studentSkills);
+                        $app->match_message = $matcher->getMatchMessage(
+                            $app->match_score,
+                            $app->matched_skills,
+                            $app->missing_skills,
                             $oppSkills,
-                            $studentSkills,
-                            $studentProfile,
-                            $oppProfile
+                            $course,
+                            $academicField,
+                            $gpa,
+                            $interests ? (is_array($interests) ? $interests : explode(',', $interests)) : null,
+                            'organization'
                         );
+                        $app->xai_course = $course;
+                        $app->xai_academic_field = $academicField;
+                        $app->xai_gpa = $gpa;
+                        $app->xai_interests = $interests;
                     }
                 }
-                
-                // Sort by match score
                 $oppApplications = $oppApplications->sortByDesc('match_score');
                 $applications = $applications->merge($oppApplications->take(3));
             }
         }
-        
         $data = [
             'openOpportunities' => $org ? $org->opportunities()->where('status', 'open')->count() : 0,
             'placementsSecured' => $org ? $org->opportunities()->where('status', 'placed')->count() : 0,
@@ -191,4 +226,25 @@ class DashboardController extends Controller
     {
         return view('dashboard', ['role' => 'user']);
     }
+
+        /**
+     * Manually calculate ML match scores for student dashboard.
+     */
+    public function calculateMatches(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'student' || !$user->student) {
+            return redirect()->back()->with('error', 'Only students can calculate matches.');
+        }
+        $mlMatcher = new \App\Services\SkillMatcher();
+        $student = $user->student;
+        $openOpportunities = \App\Models\Opportunity::where('status', 'open')
+            ->with(['skills', 'organization'])
+            ->get();
+        $allMatches = $mlMatcher->batchMatch($student, $openOpportunities);
+        // Optionally store matches in session or cache for display
+        session(['student_dashboard_matches' => $allMatches]);
+        return redirect()->back()->with('success', 'ML matches calculated!');
+    }
+
 }

@@ -89,15 +89,169 @@
                                 @endforeach
                             </div>
                         </section>
-                        @if(auth()->user() && auth()->user()->role === 'student' && isset($opportunity->match_score))
-                        <section class="mt-4">
-                            <h5>ML Match Scores</h5>
-                            <div class="text-xs text-gray-700">
-                                <strong>TF-IDF:</strong> {{ round($opportunity->tfidf_score ?? 0) }}%
-                                <strong>LogReg:</strong> {{ round($opportunity->logreg_score ?? 0) }}%
-                                <strong>RF:</strong> {{ round($opportunity->rf_score ?? 0) }}%
+                        @if(auth()->user() && auth()->user()->role === 'student')
+                            @php
+                                $student = auth()->user()->student;
+                                $hasApplied = $student->applications->contains('opportunity_id', $opportunity->id);
+                                $matcher = app(\App\Services\SkillMatcher::class);
+                                $requiredSkills = $opportunity->skills->pluck('name')->toArray();
+                            @endphp
+                            <div class="mt-4 text-center">
+                                <form method="POST" action="{{ route('opportunities.calculate_matches') }}">
+                                    @csrf
+                                    <input type="hidden" name="opportunity_id" value="{{ $opportunity->id }}">
+                                    <button type="submit" class="btn btn-primary">Recalculate ML Match</button>
+                                </form>
                             </div>
-                        </section>
+                            <section class="mt-4">
+                                <h5>ML Match Scores</h5>
+                                @if($hasApplied)
+                                    @php
+                                        $application = $student->applications->where('opportunity_id', $opportunity->id)->first();
+                                        $applicantSkills = $application ? ($application->student->skills->pluck('name')->toArray() ?? []) : [];
+                                        // If persisted matched/missing skills are missing or empty, recalculate
+                                        $matchedSkills = null;
+                                        $missingSkills = null;
+                                        if (isset($application->matched_skills) && is_string($application->matched_skills) && strlen($application->matched_skills) > 2) {
+                                            $matchedSkills = json_decode($application->matched_skills, true);
+                                        }
+                                        if (isset($application->missing_skills) && is_string($application->missing_skills) && strlen($application->missing_skills) > 2) {
+                                            $missingSkills = json_decode($application->missing_skills, true);
+                                        }
+                                        if (!is_array($matchedSkills) || !count($matchedSkills)) {
+                                            $matchedSkills = $matcher->getMatchedSkills($requiredSkills, $applicantSkills);
+                                        }
+                                        if (!is_array($missingSkills) || !count($missingSkills)) {
+                                            $missingSkills = $matcher->getMissingSkills($requiredSkills, $applicantSkills);
+                                        }
+                                        $matchScore = $application->rf_score ?? $application->match_score ?? 0;
+                                        $tfidfScore = $application->tfidf_score ?? 0;
+                                        $logregScore = $application->logreg_score ?? 0;
+                                        $matchMessage = $application->match_message ?? $matcher->getMatchMessage($matchScore, $matchedSkills, $missingSkills, $requiredSkills);
+                                    @endphp
+                                    <div class="text-xs text-gray-700 mb-2">
+                                        <strong>TF-IDF:</strong> {{ round($tfidfScore) }}%
+                                        <strong>LogReg:</strong> {{ round($logregScore) }}%
+                                        <strong>RF:</strong> {{ round($matchScore) }}%
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-light rounded">
+                                                <strong>Required Skills:</strong>
+                                                <ul class="mb-0">
+                                                    @foreach($opportunity->skills as $skill)
+                                                        <li>{{ $skill->name }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-light rounded">
+                                                <strong>Applicant Skills:</strong>
+                                                <ul class="mb-0">
+                                                    @foreach($applicantSkills as $skill)
+                                                        <li>{{ $skill }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 p-3 bg-white border rounded shadow-sm">
+                                        <h6 class="mb-2 text-primary">Explainable AI (XAI) - Why this match?</h6>
+                                        <div class="mb-2">
+                                            <strong>Matched Skills:</strong>
+                                            @if(is_array($matchedSkills) && count($matchedSkills))
+                                                <span class="text-success">{{ implode(', ', $matchedSkills) }}</span>
+                                            @else
+                                                <span class="text-danger">None</span>
+                                            @endif
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Missing Skills:</strong>
+                                            @if(is_array($missingSkills) && count($missingSkills))
+                                                <span class="text-warning">{{ implode(', ', $missingSkills) }}</span>
+                                            @else
+                                                <span class="text-success">None</span>
+                                            @endif
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Explanation:</strong> {{ $matchMessage }}
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="text-xs text-blue-700 mr-2">Course: <span class="font-semibold">{{ $student->course ?? ($application->student->course ?? 'N/A') }}</span></span>
+                                            <span class="text-xs text-blue-700 mr-2">Academic Field: <span class="font-semibold">{{ $student->academic_field ?? ($application->student->academic_field ?? 'N/A') }}</span></span>
+                                            <span class="text-xs text-purple-700 mr-2">GPA: <span class="font-semibold">{{ $student->gpa ?? ($application->student->gpa ?? 'N/A') }}</span></span>
+                                            <span class="text-xs text-orange-700">Interests: <span class="font-semibold">{{ $student->interests ?? ($application->student->interests ?? 'N/A') }}</span></span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="text-xs text-blue-700 mr-2">Course: <span class="font-semibold">{{ $student->course ?? 'N/A' }}</span></span>
+                                            <span class="text-xs text-blue-700 mr-2">Academic Field: <span class="font-semibold">{{ $student->academic_field ?? 'N/A' }}</span></span>
+                                            <span class="text-xs text-purple-700 mr-2">GPA: <span class="font-semibold">{{ $student->gpa ?? 'N/A' }}</span></span>
+                                            <span class="text-xs text-orange-700">Interests: <span class="font-semibold">{{ $student->interests ?? 'N/A' }}</span></span>
+                                        </div>
+                                    </div>
+                                @else
+                                    @php
+                                        $applicantSkills = $student->skills->pluck('name')->toArray();
+                                        $matchedSkills = $matcher->getMatchedSkills($requiredSkills, $applicantSkills);
+                                        $missingSkills = $matcher->getMissingSkills($requiredSkills, $applicantSkills);
+                                        $mlScores = $matcher->getMLScores(implode(' ', $applicantSkills), implode(' ', $requiredSkills));
+                                        $matchScore = $mlScores['rf'] ?? 0;
+                                        $tfidfScore = $mlScores['tfidf'] ?? 0;
+                                        $logregScore = $mlScores['logreg'] ?? 0;
+                                        $matchMessage = $matcher->getMatchMessage($matchScore, $matchedSkills, $missingSkills, $requiredSkills);
+                                    @endphp
+                                    <div class="text-xs text-gray-700 mb-2">
+                                        <strong>TF-IDF:</strong> {{ round($tfidfScore) }}%
+                                        <strong>LogReg:</strong> {{ round($logregScore) }}%
+                                        <strong>RF:</strong> {{ round($matchScore) }}%
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-light rounded">
+                                                <strong>Required Skills:</strong>
+                                                <ul class="mb-0">
+                                                    @foreach($opportunity->skills as $skill)
+                                                        <li>{{ $skill->name }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-light rounded">
+                                                <strong>Applicant Skills:</strong>
+                                                <ul class="mb-0">
+                                                    @foreach($applicantSkills as $skill)
+                                                        <li>{{ $skill }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 p-3 bg-white border rounded shadow-sm">
+                                        <h6 class="mb-2 text-primary">Explainable AI (XAI) - Why this match?</h6>
+                                        <div class="mb-2">
+                                            <strong>Matched Skills:</strong>
+                                            @if(is_array($matchedSkills) && count($matchedSkills))
+                                                <span class="text-success">{{ implode(', ', $matchedSkills) }}</span>
+                                            @else
+                                                <span class="text-danger">None</span>
+                                            @endif
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Missing Skills:</strong>
+                                            @if(is_array($missingSkills) && count($missingSkills))
+                                                <span class="text-warning">{{ implode(', ', $missingSkills) }}</span>
+                                            @else
+                                                <span class="text-success">None</span>
+                                            @endif
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Explanation:</strong> {{ $matchMessage }}
+                                        </div>
+                                    </div>
+                                @endif
+                            </section>
                         @endif
 
                         <footer class="mt-4 text-muted">

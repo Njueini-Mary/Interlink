@@ -57,6 +57,12 @@
       </div>
     </form>
 
+    @if(auth()->user()->role === 'student')
+    <form method="POST" action="{{ route('opportunities.calculate_matches') }}" class="mb-6">
+      @csrf
+      <button type="submit" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700">Calculate Matches (ML)</button>
+    </form>
+    @endif
     <!-- Opportunity Listings -->
     @if ($opportunities->count())
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

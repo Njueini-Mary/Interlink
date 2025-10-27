@@ -224,10 +224,18 @@ PYTHON;
      */
     public function getMatchedSkills(array $opportunitySkills, array $studentSkills): array
     {
-        return array_values(array_intersect(
-            array_map('strtolower', $opportunitySkills),
-            array_map('strtolower', $studentSkills)
-        ));
+        // Map lowercase to original for display
+        $oppLowerMap = [];
+        foreach ($opportunitySkills as $skill) {
+            $oppLowerMap[strtolower($skill)] = $skill;
+        }
+        $studentLower = array_map('strtolower', $studentSkills);
+        $oppLower = array_map('strtolower', $opportunitySkills);
+        $matchedLower = array_intersect($oppLower, $studentLower);
+        // Return original skill names for display
+        return array_values(array_map(function($s) use ($oppLowerMap) {
+            return $oppLowerMap[$s];
+        }, $matchedLower));
     }
 
     /**
@@ -235,20 +243,39 @@ PYTHON;
      */
     public function getMissingSkills(array $opportunitySkills, array $studentSkills): array
     {
-        return array_values(array_diff(
-            array_map('strtolower', $opportunitySkills),
-            array_map('strtolower', $studentSkills)
-        ));
+        // Map lowercase to original for display
+        $oppLowerMap = [];
+        foreach ($opportunitySkills as $skill) {
+            $oppLowerMap[strtolower($skill)] = $skill;
+        }
+        $studentLower = array_map('strtolower', $studentSkills);
+        $oppLower = array_map('strtolower', $opportunitySkills);
+        $missingLower = array_diff($oppLower, $studentLower);
+        // Return original skill names for display
+        return array_values(array_map(function($s) use ($oppLowerMap) {
+            return $oppLowerMap[$s];
+        }, $missingLower));
     }
 
     /**
-     * Get match category based on score
-     * 
+     * Get match category based on score and skill overlap
      * @param float $matchScore Match percentage (0-100)
+     * @param array $matchedSkills
+     * @param array $requiredSkills
      * @return string Category: 'excellent', 'good', 'fair', 'poor'
      */
-    public function getMatchCategory(float $matchScore): string
+    public function getMatchCategory(float $matchScore, array $matchedSkills = [], array $requiredSkills = []): string
     {
+        $matchedCount = is_array($matchedSkills) ? count($matchedSkills) : 0;
+        $requiredCount = is_array($requiredSkills) ? count($requiredSkills) : 0;
+        $skillRatio = $requiredCount > 0 ? ($matchedCount / $requiredCount) : 0;
+
+        // If most required skills are matched, boost category
+        if ($skillRatio >= 0.8) return 'excellent';
+        if ($skillRatio >= 0.6) return 'good';
+        if ($skillRatio >= 0.4) return 'fair';
+
+        // Otherwise, fallback to ML score
         if ($matchScore >= 80) return 'excellent';
         if ($matchScore >= 60) return 'good';
         if ($matchScore >= 40) return 'fair';
@@ -256,20 +283,55 @@ PYTHON;
     }
 
     /**
-     * Get match message for display
+     * Get match message for display (dynamic, considers skills)
+     * @param float $matchScore
+     * @param array $matchedSkills
+     * @param array $missingSkills
+     * @param array $requiredSkills
+     * @return string
      */
-    public function getMatchMessage(float $matchScore): string
+    public function getMatchMessage(float $matchScore, array $matchedSkills = [], array $missingSkills = [], array $requiredSkills = [], $course = null, $academicField = null, $gpa = null, $interests = null, $viewerRole = null): string
     {
-        $category = $this->getMatchCategory($matchScore);
-        
-        $messages = [
-            'excellent' => 'Perfect match! Your skills align very well with this opportunity.',
-            'good' => 'Great match! You meet most requirements for this position.',
-            'fair' => 'Decent match. Consider applying if interested in this field.',
-            'poor' => 'Low match. You may need additional skills for this role.'
-        ];
-        
-        return $messages[$category];
+        $category = $this->getMatchCategory($matchScore, $matchedSkills, $requiredSkills);
+        $matched = is_array($matchedSkills) ? $matchedSkills : [];
+        $missing = is_array($missingSkills) ? $missingSkills : [];
+        $matchedCount = count($matched);
+        $missingCount = count($missing);
+        $profileFactors = [];
+        if ($course) $profileFactors[] = $course;
+        if ($academicField) $profileFactors[] = $academicField;
+        if ($gpa) $profileFactors[] = $gpa;
+        if ($interests && is_array($interests) && count($interests)) $profileFactors = array_merge($profileFactors, $interests);
+        $profileSummary = count($profileFactors) ? implode(', ', $profileFactors) : '';
+        $message = '';
+            if ($viewerRole === 'organization') {
+            if ($category === 'excellent') {
+                $message = 'This applicant meets all required skills (' . implode(', ', $matched) . ').';
+            } elseif ($category === 'good') {
+                $message = 'Strong applicant: most required skills matched (' . implode(', ', $matched) . '). Missing: ' . implode(', ', $missing) . '. Profile: ' . $profileSummary;
+            } elseif ($category === 'fair') {
+                $message = 'Some relevant skills (' . implode(', ', $matched) . '), missing: ' . implode(', ', $missing) . '. Profile factors (' . $profileSummary . ') may compensate.';
+            } else {
+                $message = 'Low skill match (' . implode(', ', $matched) . '). Missing: ' . implode(', ', $missing) . '. Profile: ' . $profileSummary;
+            }
+        } else {
+            if ($category === 'excellent') {
+                $message = 'Excellent match! You meet all required skills: ' . implode(', ', $matched) . '.';
+            } elseif ($category === 'good') {
+                $message = 'Great match! You meet most requirements (' . $matchedCount . ' out of ' . ($matchedCount + $missingCount) . '): ' . implode(', ', $matched) . '. Missing: ' . implode(', ', $missing) . '. Profile factors: ' . $profileSummary;
+            } elseif ($category === 'fair') {
+                $message = 'Fair match. You have some relevant skills (' . implode(', ', $matched) . '), but you are missing: ' . implode(', ', $missing) . '. Profile factors: ' . $profileSummary . '. Consider improving these areas.';
+            } else {
+                $message = 'Low match. You have: ' . implode(', ', $matched) . '. Missing: ' . implode(', ', $missing) . '. Profile factors: ' . $profileSummary . '. You may need additional skills for this role.';
+            }
+        }
+        return $message;
+    }
+
+    // Backward compatibility: if only score is provided
+    public function getMatchMessageSimple(float $matchScore): string
+    {
+        return $this->getMatchMessage($matchScore, [], []);
     }
 
     /**

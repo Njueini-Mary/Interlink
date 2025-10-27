@@ -34,7 +34,13 @@
         </a>
     </div>
 
-    <!-- ML Recommended Opportunities -->
+        @if(auth()->user()->role === 'student')
+        <form method="POST" action="{{ route('student.dashboard.calculate_matches') }}" class="mb-10">
+            @csrf
+            <button type="submit" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700">Calculate Matches (ML)</button>
+        </form>
+        @endif
+        <!-- ML Recommended Opportunities -->
     @if(!empty($recommendedOpportunities) && count($recommendedOpportunities) > 0)
     <div class="mb-10">
         <h3 class="text-lg font-bold mb-4 text-indigo-700 flex items-center">

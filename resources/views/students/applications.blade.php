@@ -9,6 +9,12 @@
 <div class="max-w-7xl mx-auto py-10 px-6 bg-gray-50 rounded-lg shadow-lg">
     <h1 class="text-3xl font-extrabold mb-8 text-gray-800 text-center">My Applications</h1>
 
+    <div class="mb-6 flex justify-end">
+        <form method="POST" action="{{ route('student.applications.calculate_matches') }}">
+            @csrf
+            <button type="submit" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 font-semibold">Calculate ML Matches</button>
+        </form>
+    </div>
     @if($applications->count())
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach($applications as $application)

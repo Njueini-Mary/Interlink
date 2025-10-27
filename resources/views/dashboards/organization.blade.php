@@ -46,6 +46,15 @@
         </div>
     </div>
 
+    @include('components.ml-loader')
+    <div class="mb-6 flex justify-end">
+        <form method="POST" action="{{ route('organization.dashboard.calculate_matches') }}" onsubmit="showMLLoader()">
+            @csrf
+            <button type="submit" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 font-semibold">
+                <i class="fas fa-robot mr-2"></i> Calculate ML Matches
+            </button>
+        </form>
+    </div>
     <!-- Recent Student Applications (ML Ranked) -->
     <div class="mb-10">
         <h3 class="text-lg font-bold mb-4 text-purple-700 flex items-center">
@@ -56,7 +65,10 @@
             <span class="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">ML Ranked</span>
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @forelse($applications ?? [] as $application)
+            @php
+                $sortedApplications = ($applications ?? collect())->sortByDesc('match_score');
+            @endphp
+            @forelse($sortedApplications as $application)
             <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between {{ isset($application->match_score) && $application->match_score >= 60 ? 'border-l-4 border-green-500' : '' }}">
                 <div class="flex justify-between items-start mb-2">
                     <div class="font-semibold text-gray-800">{{ $application->student->name }}</div>
@@ -76,6 +88,33 @@
                 <div class="text-xs text-gray-400">Status: <span class="font-medium">{{ ucfirst($application->status) }}</span></div>
                 @if(isset($application->match_score) && $application->match_score >= 60)
                     <div class="text-xs text-green-600 font-medium mt-1">⭐ Highly Recommended</div>
+                @endif
+                {{-- XAI Section --}}
+                @if(isset($application->matched_skills) || isset($application->missing_skills) || isset($application->match_message))
+                <div class="mt-2 p-2 bg-gray-50 rounded">
+                    <div class="text-xs text-gray-700 mb-1 font-semibold">Explainable AI (XAI):</div>
+                    @if(isset($application->match_message))
+                        <div class="text-xs text-indigo-700 mb-1">{{ $application->match_message }}</div>
+                    @endif
+                    @if(isset($application->matched_skills) && count($application->matched_skills))
+                        <div class="text-xs text-green-700 mb-1">Matched Skills: <span class="font-semibold">{{ implode(', ', $application->matched_skills) }}</span></div>
+                    @endif
+                    @if(isset($application->missing_skills) && count($application->missing_skills))
+                        <div class="text-xs text-red-700 mb-1">Missing Skills: <span class="font-semibold">{{ implode(', ', $application->missing_skills) }}</span></div>
+                    @endif
+                    @if(isset($application->xai_course) && $application->xai_course)
+                        <div class="text-xs text-blue-700 mb-1">Course: <span class="font-semibold">{{ $application->xai_course }}</span></div>
+                    @endif
+                    @if(isset($application->xai_academic_field) && $application->xai_academic_field)
+                        <div class="text-xs text-blue-700 mb-1">Academic Field: <span class="font-semibold">{{ $application->xai_academic_field }}</span></div>
+                    @endif
+                    @if(isset($application->xai_gpa) && $application->xai_gpa)
+                        <div class="text-xs text-purple-700 mb-1">GPA: <span class="font-semibold">{{ $application->xai_gpa }}</span></div>
+                    @endif
+                    @if(isset($application->xai_interests) && $application->xai_interests)
+                        <div class="text-xs text-orange-700">Interests: <span class="font-semibold">{{ $application->xai_interests }}</span></div>
+                    @endif
+                </div>
                 @endif
                 <div class="mt-2 flex justify-end">
                     <a href="{{ route('applications.show', $application->id) }}" class="text-purple-600 hover:underline text-sm">View Application</a>

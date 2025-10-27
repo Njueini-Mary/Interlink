@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/applications', [\App\Http\Controllers\ApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{id}', [\App\Http\Controllers\ApplicationController::class, 'show'])->name('applications.show');
     Route::post('/student/applications', [\App\Http\Controllers\ApplicationController::class, 'store'])->name('student.applications.store');
+        Route::post('/applications/{id}/calculate-match', [\App\Http\Controllers\ApplicationController::class, 'calculateMatch'])->name('applications.calculate_match');
 });
 
 
@@ -164,4 +165,17 @@ Route::post('/applications/{id}/approve', [ApplicationController::class, 'approv
 Route::post('/applications/{id}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
 // Admin: Generate ML match score for application
 Route::post('/admin/applications/{id}/generate-match', [ApplicationController::class, 'generateMatch'])->name('admin.applications.generate_match');
+
+
+// Manual ML match calculation for student dashboard
+Route::post('/student/dashboard/calculate-matches', [DashboardController::class, 'calculateMatches'])->name('student.dashboard.calculate_matches');
+// Manual ML match calculation for opportunities
+Route::post('/opportunities/calculate-matches', [OpportunityController::class, 'calculateMatches'])->name('opportunities.calculate_matches');
+// Manual ML match calculation for student applications
+Route::post('/student/applications/calculate-matches', [StudentController::class, 'calculateMatches'])->name('student.applications.calculate_matches');
+// Manual ML match calculation for organization dashboard
+Route::post('/organization/dashboard/calculate-matches', [DashboardController::class, 'calculateOrgMatches'])->name('organization.dashboard.calculate_matches');
+// Manual ML match calculation for a student application (persist scores for that student/opportunity pair)
+Route::post('/student/applications/{id}/calculate-match', [App\Http\Controllers\ApplicationController::class, 'studentCalculateMatch'])->name('student.applications.calculate_match');
+
 require __DIR__ . '/auth.php';

@@ -45,31 +45,7 @@ class OpportunityController extends Controller
         
         $opportunities = $query->latest()->get();
         
-        // Add ML match scores if user is a student
-        $user = Auth::user();
-        if ($user && $user->role === 'student' && $user->student) {
-            $matcher = new \App\Services\SkillMatcher();
-            $studentSkills = $user->student->skills->pluck('name')->toArray();
-            $studentProfile = $user->student->course . ' ' . ($user->student->academic_field ?? '');
-            
-            foreach ($opportunities as $opp) {
-                $oppSkills = $opp->skills->pluck('name')->toArray();
-                $oppProfile = $opp->title . ' ' . $opp->description;
-                $mlScores = $matcher->getMLScores(
-                    implode(' ', $studentSkills) . ' ' . $studentProfile,
-                    implode(' ', $oppSkills) . ' ' . $oppProfile
-                );
-                $opp->match_score = $mlScores['rf'];
-                $opp->tfidf_score = $mlScores['tfidf'];
-                $opp->logreg_score = $mlScores['logreg'];
-                $opp->rf_score = $mlScores['rf'];
-            }
-            
-            // Sort by match score if requested
-            if ($request->input('sort') === 'match') {
-                $opportunities = $opportunities->sortByDesc('match_score');
-            }
-        }
+        // ML match scores will be calculated manually via button
         
         $opportunities = new \Illuminate\Pagination\LengthAwarePaginator(
             $opportunities->forPage($request->input('page', 1), 10),
@@ -91,21 +67,7 @@ class OpportunityController extends Controller
         $opportunity = Opportunity::with(['organization', 'category', 'skills', 'user'])
             ->findOrFail($id);
         $user = Auth::user();
-        if ($user && $user->role === 'student' && $user->student) {
-            $matcher = new \App\Services\SkillMatcher();
-            $studentSkills = $user->student->skills->pluck('name')->toArray();
-            $studentProfile = $user->student->course . ' ' . ($user->student->academic_field ?? '');
-            $oppSkills = $opportunity->skills->pluck('name')->toArray();
-            $oppProfile = $opportunity->title . ' ' . $opportunity->description;
-            $mlScores = $matcher->getMLScores(
-                implode(' ', $studentSkills) . ' ' . $studentProfile,
-                implode(' ', $oppSkills) . ' ' . $oppProfile
-            );
-            $opportunity->match_score = $mlScores['rf'];
-            $opportunity->tfidf_score = $mlScores['tfidf'];
-            $opportunity->logreg_score = $mlScores['logreg'];
-            $opportunity->rf_score = $mlScores['rf'];
-        }
+        // ML match scores will be calculated manually via button
         return view('opportunities.show', compact('opportunity'));
     }
 
@@ -302,4 +264,33 @@ class OpportunityController extends Controller
 
         return redirect()->route('opportunities.index')->with('status', 'Opportunity deleted successfully.');
     }
+
+    /**
+     * Manually calculate ML match scores for all opportunities for the current student.
+     */
+    public function calculateMatches(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'student' || !$user->student) {
+            return redirect()->back()->with('error', 'Only students can calculate matches.');
+        }
+        $matcher = new \App\Services\SkillMatcher();
+        $studentSkills = $user->student->skills->pluck('name')->toArray();
+        $studentProfile = $user->student->course . ' ' . ($user->student->academic_field ?? '');
+        $opportunities = Opportunity::with('skills')->get();
+        foreach ($opportunities as $opp) {
+            $oppSkills = $opp->skills->pluck('name')->toArray();
+            $oppProfile = $opp->title . ' ' . $opp->description;
+            $mlScores = $matcher->getMLScores(
+                implode(' ', $studentSkills) . ' ' . $studentProfile,
+                implode(' ', $oppSkills) . ' ' . $oppProfile
+            );
+            $opp->match_score = $mlScores['rf'];
+            $opp->tfidf_score = $mlScores['tfidf'];
+            $opp->logreg_score = $mlScores['logreg'];
+            $opp->rf_score = $mlScores['rf'];
+        }
+        return redirect()->back()->with('success', 'ML matches calculated!');
+    }
+
 }

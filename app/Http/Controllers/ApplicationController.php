@@ -10,6 +10,60 @@ use Illuminate\Support\Facades\Log;
 
 class ApplicationController extends Controller
 {
+    /**
+     * Student manually recalculates and persists ML scores for their own application.
+     */
+    public function studentCalculateMatch(Request $request, $id)
+    {
+        $user = Auth::user();
+        $application = Application::with(['student', 'student.user', 'opportunity'])->findOrFail($id);
+        // Only allow if this is the logged-in student's application
+        if (!$user || $user->role !== 'student' || $application->student_id !== $user->student->id) {
+            return redirect()->back()->with('error', 'Unauthorized.');
+        }
+        $matcher = new \App\Services\SkillMatcher();
+        $studentSkills = $application->student->skills->pluck('name')->toArray();
+        $opportunitySkills = $application->opportunity->skills->pluck('name')->toArray();
+        $studentProfile = ($application->student->bio ?? '') . ' ' . ($application->student->interests ?? '') . ' ' . ($application->student->course ?? '') . ' ' . ($application->student->university ?? '');
+        $opportunityProfile = ($application->opportunity->description ?? '') . ' ' . ($application->opportunity->title ?? '');
+        $studentText = implode(' ', $studentSkills) . ' ' . $studentProfile;
+        $opportunityText = implode(' ', $opportunitySkills) . ' ' . $opportunityProfile;
+    $mlScores = $matcher->getMLScores($studentText, $opportunityText);
+    $application->match_score = $mlScores['rf'];
+    $application->tfidf_score = $mlScores['tfidf'];
+    $application->logreg_score = $mlScores['logreg'];
+    $application->rf_score = $mlScores['rf'];
+    $matchedSkills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
+    $missingSkills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
+    $application->matched_skills = json_encode($matchedSkills);
+    $application->missing_skills = json_encode($missingSkills);
+    // Gather profile factors for XAI
+    $studentProfileData = [
+        'course' => $application->student->course ?? '',
+        'academic_field' => $application->student->academic_field ?? '',
+        'gpa' => $application->student->gpa ?? '',
+        'interests' => $application->student->interests ?? '',
+    ];
+    $opportunityProfileData = [
+        'course' => $application->opportunity->course ?? '',
+        'academic_field' => $application->opportunity->academic_field ?? '',
+        'min_gpa' => $application->opportunity->min_gpa ?? '',
+        'interests' => $application->opportunity->interests ?? '',
+    ];
+    // Pass profile factors directly for improved XAI
+    $application->match_message = $matcher->getMatchMessage(
+        $mlScores['rf'],
+        $matchedSkills,
+        $missingSkills,
+        $opportunitySkills,
+        $application->student->course ?? null,
+        $application->student->academic_field ?? null,
+        $application->student->gpa ?? null,
+        $application->student->interests ? (is_array($application->student->interests) ? $application->student->interests : explode(',', $application->student->interests)) : null
+    );
+    $application->save();
+        return redirect()->back()->with('success', 'ML match score recalculated and saved for your application!');
+    }
     // List applications for the logged-in user (student or organization)
     public function index()
     {
@@ -92,30 +146,26 @@ class ApplicationController extends Controller
     // Show a single application
     public function show($id)
     {
-        $application = Application::with(['student.user', 'opportunity'])->findOrFail($id);
+        $application = Application::with(['student.user', 'opportunity', 'student.skills', 'opportunity.skills'])->findOrFail($id);
         $user = Auth::user();
 
-        // Add ML match score
-        $studentSkills = optional($application->student)->skills ?? [];
-        $opportunitySkills = optional($application->opportunity)->skills ?? [];
+        // Always recalculate XAI message for display context
         $matcher = new \App\Services\SkillMatcher();
-
-        // Fix: Convert Eloquent Collection to array of skill names
-        if ($studentSkills instanceof \Illuminate\Database\Eloquent\Collection) {
-            $studentSkills = $studentSkills->pluck('name')->toArray();
-        } elseif (is_array($studentSkills)) {
-            // Already array
-        } else {
-            $studentSkills = [];
-        }
-        if ($opportunitySkills instanceof \Illuminate\Database\Eloquent\Collection) {
-            $opportunitySkills = $opportunitySkills->pluck('name')->toArray();
-        } elseif (is_array($opportunitySkills)) {
-            // Already array
-        } else {
-            $opportunitySkills = [];
-        }
-        $application->match_score = $matcher->getMatchPercentage($opportunitySkills, $studentSkills);
+        $studentSkills = $application->student && $application->student->skills ? $application->student->skills->pluck('name')->toArray() : [];
+        $opportunitySkills = $application->opportunity && $application->opportunity->skills ? $application->opportunity->skills->pluck('name')->toArray() : [];
+        $application->matched_skills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
+        $application->missing_skills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
+        $application->match_message = $matcher->getMatchMessage(
+            $application->rf_score ?? $application->match_score ?? 0,
+            $application->matched_skills,
+            $application->missing_skills,
+            $opportunitySkills,
+            $application->student->course ?? null,
+            $application->student->academic_field ?? null,
+            $application->student->gpa ?? null,
+            $application->student->interests ? (is_array($application->student->interests) ? $application->student->interests : explode(',', $application->student->interests)) : null,
+            $user->role ?? null
+        );
 
         if (
             ($user->role === 'student' && optional($application->student)->id === optional($user->student)->id) ||
@@ -287,4 +337,52 @@ class ApplicationController extends Controller
         $application->save();
         return redirect()->back()->with('success', 'ML match score generated!');
     }
+    /**
+     * Manually recalculate ML match and XAI for any authorized user (student, org, admin).
+     */
+    public function calculateMatch(Request $request, $id)
+    {
+        $user = Auth::user();
+        $application = Application::with(['student', 'student.user', 'opportunity'])->findOrFail($id);
+        // Only allow if student owns, org owns, or admin
+        $isStudent = $user->role === 'student' && $application->student_id === optional($user->student)->id;
+        $isOrg = $user->role === 'organization' && $application->opportunity->organization_id === optional($user->organizationProfile)->id;
+        $isAdmin = $user->role === 'admin';
+        if (!($isStudent || $isOrg || $isAdmin)) {
+            return redirect()->back()->with('error', 'Unauthorized.');
+        }
+    $matcher = new \App\Services\SkillMatcher();
+    $studentSkills = $application->student->skills->pluck('name')->toArray();
+    $opportunitySkills = $application->opportunity->skills->pluck('name')->toArray();
+    $studentProfile = ($application->student->bio ?? '') . ' ' . ($application->student->interests ?? '') . ' ' . ($application->student->course ?? '') . ' ' . ($application->student->university ?? '');
+    $opportunityProfile = ($application->opportunity->description ?? '') . ' ' . ($application->opportunity->title ?? '');
+    $studentText = implode(' ', $studentSkills) . ' ' . $studentProfile;
+    $opportunityText = implode(' ', $opportunitySkills) . ' ' . $opportunityProfile;
+    $mlScores = $matcher->getMLScores($studentText, $opportunityText);
+    $application->match_score = $mlScores['rf'];
+    $application->tfidf_score = $mlScores['tfidf'];
+    $application->logreg_score = $mlScores['logreg'];
+    $application->rf_score = $mlScores['rf'];
+    // Add XAI fields for immediate display
+    $application->matched_skills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
+    $application->missing_skills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
+    $application->match_message = $matcher->getMatchMessage(
+        $mlScores['rf'],
+        $application->matched_skills,
+        $application->missing_skills,
+        $opportunitySkills,
+        $application->student->course ?? null,
+        $application->student->academic_field ?? null,
+        $application->student->gpa ?? null,
+        $application->student->interests ? (is_array($application->student->interests) ? $application->student->interests : explode(',', $application->student->interests)) : null
+    );
+    $application->xai_course = $application->student->course ?? '';
+    $application->xai_academic_field = $application->student->academic_field ?? '';
+    $application->xai_gpa = $application->gpa ?? '';
+    $application->xai_interests = $application->interests ?? $application->student->interests ?? '';
+    $application->save();
+    return redirect()->back()->with('success', 'ML match score and XAI recalculated and saved for this application!');
+    }
+
+
 }
