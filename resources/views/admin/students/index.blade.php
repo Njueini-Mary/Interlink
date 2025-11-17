@@ -1,4 +1,3 @@
-
 @extends('layouts.dashboard')
 @section('content')
 
@@ -80,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				<th class="px-4 py-2 text-left">University</th>
 				<th class="px-4 py-2 text-left">Course</th>
 				<th class="px-4 py-2 text-left">Year</th>
+				<th class="px-4 py-2 text-left">Email</th>
 				<th class="px-4 py-2 text-left">Actions</th>
 			</tr>
 		</thead>
@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				<td class="px-4 py-2">{{ $student->university }}</td>
 				<td class="px-4 py-2">{{ $student->course }}</td>
 				<td class="px-4 py-2">{{ $student->year }}</td>
+				<td class="px-4 py-2">{{ $student->user->email ?? '-' }}</td>
 				<td class="px-4 py-2">
 					<a href="{{ route('admin.students.show', $student->id) }}" class="text-indigo-600 hover:underline">View</a>
 				</td>

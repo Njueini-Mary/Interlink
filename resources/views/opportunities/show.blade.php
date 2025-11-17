@@ -261,7 +261,7 @@
                             </div>
                         </footer>
 
-                        @if (auth()->check() && auth()->user()->id === $opportunity->creator->id)
+                        @if (auth()->check() && $opportunity->creator && auth()->user()->id === $opportunity->creator->id)
                             <div class="mt-4 text-center">
                                 <a href="{{ route('admin.opportunities.edit', $opportunity->id) }}" class="btn btn-warning">Edit</a>
                             </div>

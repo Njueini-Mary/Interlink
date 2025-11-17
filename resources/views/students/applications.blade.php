@@ -10,50 +10,76 @@
     <h1 class="text-3xl font-extrabold mb-8 text-gray-800 text-center">My Applications</h1>
 
     <div class="mb-6 flex justify-end">
-        <form method="POST" action="{{ route('student.applications.calculate_matches') }}">
+        <form method="POST" action="{{ route('student.applications.calculate_matches') }}" onsubmit="showMLLoader()">
             @csrf
             <button type="submit" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 font-semibold">Calculate ML Matches</button>
         </form>
     </div>
+    <x-ml-loader />
     @if($applications->count())
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach($applications as $application)
-                <div class="bg-white rounded-lg shadow-md p-6 flex flex-col justify-between">
-                    @if(isset($application->match_score))
-                        <div class="mb-2">
-                            <span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
-                                {{ round($application->match_score) }}% Match
-                            </span>
-                            <span class="text-xs text-gray-500 ml-2">
-                                @if($application->match_score >= 80) Excellent Match
-                                @elseif($application->match_score >= 60) Good Match
-                                @elseif($application->match_score >= 30) Moderate Match
-                                @else Low Match
-                                @endif
-                            </span>
-                        </div>
-                    @endif
+                @php
+                    $studentSkills = $application->student->skills->pluck('name')->toArray() ?? [];
+                    $opportunitySkills = $application->opportunity->skills->pluck('name')->toArray() ?? [];
+                    $matchedSkills = is_array($application->matched_skills) ? $application->matched_skills : (json_decode($application->matched_skills, true) ?? []);
+                    $missingSkills = is_array($application->missing_skills) ? $application->missing_skills : (json_decode($application->missing_skills, true) ?? []);
+                @endphp
+                <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col justify-between border border-gray-200 hover:shadow-2xl transition-shadow">
                     <div class="flex items-center mb-4">
-                        <div class="bg-green-100 rounded-full p-3 mr-4">
-                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <div class="bg-indigo-100 rounded-full p-3 mr-4">
+                            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3" />
                             </svg>
                         </div>
                         <h2 class="text-xl font-semibold text-gray-800">{{ $application->opportunity->title ?? 'N/A' }}</h2>
                     </div>
+                    <div class="mb-2">
+                        <span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
+                            {{ round($application->match_score) }}% Match
+                        </span>
+                        <span class="text-xs text-gray-500 ml-2">
+                            @if($application->match_score >= 80) Excellent Match
+                            @elseif($application->match_score >= 60) Good Match
+                            @elseif($application->match_score >= 40) Moderate Match
+                            @else Low Match
+                            @endif
+                        </span>
+                    </div>
+                    <div class="mb-2 text-xs text-indigo-700 bg-indigo-50 rounded p-2">
+                        <strong>XAI:</strong> {{ $application->match_message ?? 'No explanation available.' }}
+                    </div>
                     <p class="text-gray-600 mb-2">Submitted on: <span class="font-medium">{{ $application->created_at->format('M d, Y') }}</span></p>
                     <span class="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-semibold mb-4">{{ ucfirst($application->status) }}</span>
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center mb-2">
                         <a href="{{ route('opportunities.show', $application->opportunity_id) }}" class="text-blue-600 hover:underline font-medium">View Opportunity</a>
                         <span class="text-sm text-gray-500">{{ $application->organization->name ?? 'N/A' }}</span>
                     </div>
                     <div class="mb-2">
                         <span class="font-bold text-gray-700">Your Skills:</span>
-                        <span class="text-sm text-gray-600">{{ implode(', ', $application->student->skills->pluck('name')->toArray() ?? []) }}</span>
+                        <div class="flex flex-wrap mt-1">
+                            @foreach($studentSkills as $skill)
+                                @if(in_array($skill, $matchedSkills))
+                                    <span class="inline-block bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded mr-1 mb-1 font-semibold shadow-sm">{{ $skill }}</span>
+                                @else
+                                    <span class="inline-block bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded mr-1 mb-1">{{ $skill }}</span>
+                                @endif
+                            @endforeach
+                        </div>
                     </div>
                     <div class="mb-2">
                         <span class="font-bold text-gray-700">Required Skills:</span>
-                        <span class="text-sm text-gray-600">{{ implode(', ', $application->opportunity->skills->pluck('name')->toArray() ?? []) }}</span>
+                        <div class="flex flex-wrap mt-1">
+                            @foreach($opportunitySkills as $skill)
+                                @if(in_array($skill, $matchedSkills))
+                                    <span class="inline-block bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded mr-1 mb-1 font-semibold shadow-sm">{{ $skill }}</span>
+                                @elseif(in_array($skill, $missingSkills))
+                                    <span class="inline-block bg-red-50 text-red-700 border border-red-200 px-2 py-1 rounded mr-1 mb-1 font-bold shadow-sm animate-pulse">{{ $skill }}</span>
+                                @else
+                                    <span class="inline-block bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded mr-1 mb-1">{{ $skill }}</span>
+                                @endif
+                            @endforeach
+                        </div>
                     </div>
                     @if(isset($application->ml_scores))
                         <div class="mb-2">

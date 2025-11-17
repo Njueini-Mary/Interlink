@@ -37,6 +37,13 @@ class Application extends Model
         'resume',
         'interests',
         'gpa',
+        'match_message',
+        'matched_skills',
+        'missing_skills',
+        'xai_course',
+        'xai_academic_field',
+        'xai_gpa',
+        'xai_interests',
     ];
 
     /**

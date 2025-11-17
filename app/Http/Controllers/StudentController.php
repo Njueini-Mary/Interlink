@@ -39,9 +39,32 @@ class StudentController extends Controller
             $application->tfidf_score = $mlScores['tfidf'];
             $application->logreg_score = $mlScores['logreg'];
             $application->rf_score = $mlScores['rf'];
+
+            // XAI fields
+            $matchedSkills = $mlMatcher->getMatchedSkills($opportunitySkills, $studentSkills);
+            $missingSkills = $mlMatcher->getMissingSkills($opportunitySkills, $studentSkills);
+            $matchMessage = $mlMatcher->getMatchMessage(
+                $mlScores['rf'],
+                $matchedSkills,
+                $missingSkills,
+                $opportunitySkills,
+                $application->student->course ?? null,
+                $application->student->academic_field ?? null,
+                $application->student->gpa ?? null,
+                $application->student->interests ? (is_array($application->student->interests) ? $application->student->interests : explode(',', $application->student->interests)) : null,
+                'student'
+            );
+            $application->match_message = $matchMessage;
+            $application->matched_skills = json_encode($matchedSkills);
+            $application->missing_skills = json_encode($missingSkills);
+            $application->xai_course = $application->student->course ?? null;
+            $application->xai_academic_field = $application->student->academic_field ?? null;
+            $application->xai_gpa = $application->student->gpa ?? null;
+            $application->xai_interests = is_array($application->student->interests) ? json_encode($application->student->interests) : $application->student->interests;
+
             $application->save();
         }
-        return redirect()->back()->with('success', 'ML matches calculated for your applications!');
+        return redirect()->back()->with('success', 'ML matches and XAI explanations calculated for your applications!');
     }
     // List all students
     public function index()

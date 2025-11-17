@@ -7,9 +7,33 @@ use App\Models\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\OrgApplicationsExport;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class ApplicationController extends Controller
 {
+    /**
+     * Export organization applications as Excel or PDF.
+     */
+    public function exportApplications($type)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'organization') abort(403);
+        $organization = $user->organizationProfile;
+        $applications = \App\Models\Application::whereHas('opportunity', function($q) use ($organization) {
+            $q->where('organization_id', $organization->id ?? null);
+        })->with(['student.user', 'opportunity.skills', 'student.skills'])->get();
+        if ($type === 'excel') {
+            return Excel::download(new OrgApplicationsExport, 'organization_applications.xlsx');
+        } elseif ($type === 'pdf') {
+            $orgName = $organization->name ?? 'Organization';
+            $pdf = Pdf::loadView('applications.export_pdf', compact('applications', 'orgName'));
+            return $pdf->download('organization_applications.pdf');
+        }
+        abort(404);
+    }
     /**
      * Student manually recalculates and persists ML scores for their own application.
      */
@@ -89,57 +113,7 @@ class ApplicationController extends Controller
             abort(403);
         }
 
-        // Add ML match scores to each application
-        $matcher = new \App\Services\SkillMatcher();
-        foreach ($applications as $application) {
-            // Always fetch skill names, not IDs
-            $studentSkills = [];
-            if ($application->student && $application->student->skills) {
-                foreach ($application->student->skills as $skill) {
-                    $studentSkills[] = is_object($skill) ? $skill->name : $skill;
-                }
-            }
-            $opportunitySkills = [];
-            if ($application->opportunity && $application->opportunity->skills) {
-                foreach ($application->opportunity->skills as $skill) {
-                    $opportunitySkills[] = is_object($skill) ? $skill->name : $skill;
-                }
-            }
-            // Gather richer profile/description text
-            $studentProfile = '';
-            if ($application->student) {
-                $studentProfile = trim(
-                    ($application->student->bio ?? '') . ' '
-                    . ($application->student->interests ?? '') . ' '
-                    . ($application->student->course ?? '') . ' '
-                    . ($application->student->university ?? '')
-                );
-            }
-            $opportunityProfile = '';
-            if ($application->opportunity) {
-                $opportunityProfile = trim(
-                    ($application->opportunity->description ?? '') . ' '
-                    . ($application->opportunity->title ?? '')
-                );
-            }
-            // Debug log for skills and profiles
-            \Log::debug('Application Skills', [
-                'application_id' => $application->id,
-                'student_name' => $application->student && $application->student->user ? $application->student->user->name : null,
-                'student_skills' => $studentSkills,
-                'student_profile' => $studentProfile,
-                'opportunity_title' => $application->opportunity ? $application->opportunity->title : null,
-                'opportunity_skills' => $opportunitySkills,
-                'opportunity_profile' => $opportunityProfile
-            ]);
-            $studentText = implode(' ', $studentSkills) . ' ' . $studentProfile;
-            $opportunityText = implode(' ', $opportunitySkills) . ' ' . $opportunityProfile;
-            $mlScores = $matcher->getMLScores($studentText, $opportunityText);
-            $application->match_score = $mlScores['rf'];
-            $application->tfidf_score = $mlScores['tfidf'];
-            $application->logreg_score = $mlScores['logreg'];
-            $application->rf_score = $mlScores['rf'];
-        }
+        // Do NOT recalculate ML scores on every page load. Use stored values only.
         return view('applications.index', compact('applications'));
     }
 

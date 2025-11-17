@@ -1,4 +1,3 @@
-
 @extends('layouts.dashboard')
 @section('content')
 <div class="max-w-5xl mx-auto py-8">
@@ -7,20 +6,20 @@
 		<!-- Metrics Section -->
 		<div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
 			<div class="bg-indigo-50 px-6 py-4 rounded-lg shadow flex flex-col items-center">
-				<span class="text-3xl font-bold text-indigo-700">{{ $organizations->count() }}</span>
-				<span class="text-sm text-gray-600">Total Organizations</span>
+				<span class="text-3xl font-bold text-indigo-700">{{ \App\Models\Opportunity::count() }}</span>
+				<span class="text-sm text-gray-600">Total Opportunities</span>
 			</div>
 			<div class="bg-green-50 px-6 py-4 rounded-lg shadow flex flex-col items-center">
-				<span class="text-3xl font-bold text-green-700">{{ $organizations->where('industry', 'Education')->count() }}</span>
-				<span class="text-sm text-gray-600">Education Orgs</span>
+				<span class="text-3xl font-bold text-green-700">{{ \App\Models\Application::count() }}</span>
+				<span class="text-sm text-gray-600">Total Applications</span>
 			</div>
 			<div class="bg-yellow-50 px-6 py-4 rounded-lg shadow flex flex-col items-center">
-				<span class="text-3xl font-bold text-yellow-700">{{ $organizations->where('industry', 'Technology')->count() }}</span>
-				<span class="text-sm text-gray-600">Tech Orgs</span>
+				<span class="text-3xl font-bold text-yellow-700">{{ \App\Models\Organization::count() }}</span>
+				<span class="text-sm text-gray-600">Total Organizations</span>
 			</div>
 			<div class="bg-pink-50 px-6 py-4 rounded-lg shadow flex flex-col items-center">
-				<span class="text-3xl font-bold text-pink-700">{{ $organizations->where('location', 'Nairobi')->count() }}</span>
-				<span class="text-sm text-gray-600">Nairobi Orgs</span>
+				<span class="text-3xl font-bold text-pink-700">{{ \App\Models\Student::count() }}</span>
+				<span class="text-sm text-gray-600">Total Students</span>
 			</div>
 		</div>
 
@@ -43,6 +42,8 @@
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Email</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Industry</th>
+						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Opportunities</th>
+						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applications</th>
 						<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
 					</tr>
 				</thead>
@@ -57,6 +58,8 @@
 						<td class="px-6 py-4 whitespace-nowrap">{{ $org->contact_email }}</td>
 						<td class="px-6 py-4 whitespace-nowrap">{{ $org->location }}</td>
 						<td class="px-6 py-4 whitespace-nowrap">{{ $org->industry }}</td>
+						<td class="px-6 py-4 whitespace-nowrap">{{ $org->opportunities->count() }}</td>
+						<td class="px-6 py-4 whitespace-nowrap">{{ $org->applications->count() }}</td>
 						<td class="px-6 py-4 whitespace-nowrap flex gap-2">
 							<a href="{{ route('admin.organizations.show', $org->id) }}" class="text-indigo-600 hover:underline">View</a>
 							<a href="{{ route('admin.organizations.edit', $org->id) }}" class="text-blue-600 hover:underline">Edit</a>

@@ -26,6 +26,8 @@ Route::get('/profile/update-form', [ProfileController::class, 'showUpdateProfile
 
 // Profile routes
 Route::middleware(['auth'])->group(function () {
+    // Organization applications export (PDF/Excel)
+    Route::get('/applications/export/{type}', [\App\Http\Controllers\ApplicationController::class, 'exportApplications'])->name('applications.export');
     // Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update'); // Change POST to PUT
     Route::delete('/profile/destroy', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -139,6 +141,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/applications/{id}/edit', [$ctrl, 'editApplication'])->name('applications.edit');
     Route::post('/applications/{id}/edit', [$ctrl, 'updateApplication'])->name('applications.update');
     Route::delete('/applications/{id}', [$ctrl, 'deleteApplication'])->name('applications.delete');
+    // Export applications (Excel/PDF)
+    Route::get('/applications/export/{type}', [$ctrl, 'exportApplications'])->name('applications.export');
 
     // Notifications
     Route::get('/notifications', [$ctrl, 'notifications'])->name('notifications.index');

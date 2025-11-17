@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Organization;
@@ -12,6 +13,9 @@ use App\Models\Notification;
 use App\Models\Activity;
 use App\Models\Skill;
 use App\Models\Category;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ApplicationsExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * AdminController
@@ -449,5 +453,20 @@ class AdminController extends Controller
         $activity = Activity::findOrFail($id);
         $activity->delete();
         return redirect()->route('admin.activities.index')->with('success', 'Activity deleted successfully.');
+    }
+
+    /**
+     * Export applications as Excel or PDF for admin view.
+     */
+    public function exportApplications($type)
+    {
+        if ($type === 'excel') {
+            return Excel::download(new ApplicationsExport, 'applications.xlsx');
+        } elseif ($type === 'pdf') {
+            $applications = \App\Models\Application::with(['student.user', 'opportunity'])->get();
+            $pdf = Pdf::loadView('admin.applications.export_pdf', compact('applications'));
+            return $pdf->download('applications.pdf');
+        }
+        abort(404);
     }
 }

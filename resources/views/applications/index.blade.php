@@ -12,23 +12,32 @@
             No applications found for your posted jobs.
         </div>
     @else
+        <!-- Export Buttons -->
+        <div class="mb-6 flex gap-4">
+            <a href="{{ route('applications.export', ['type' => 'excel']) }}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Export Excel</a>
+            <a href="{{ route('applications.export', ['type' => 'pdf']) }}" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Export PDF</a>
+        </div>
         <div x-data="{ showModal: false, applicant: null }">
             <div class="overflow-x-auto">
                 <table class="table-auto w-full border-collapse border border-gray-200 rounded-lg shadow-md">
                     <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Applicant</th>
-                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Opportunity</th>
-                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Status</th>
-                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Submitted</th>
-                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Match Score</th>
-                            <th class="px-4 py-2 text-left text-gray-600 font-semibold">Actions</th>
+                        <tr class="bg-gray-50 text-gray-700 uppercase text-xs tracking-wider">
+                            <th class="px-4 py-3 rounded-tl-lg">#</th>
+                            <th class="px-4 py-3">Applicant</th>
+                            <th class="px-4 py-3">Opportunity</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Submitted</th>
+                            <th class="px-4 py-3">Match Score</th>
+                            <th class="px-4 py-3">Applicant Skills</th>
+                            <th class="px-4 py-3 rounded-tr-lg">Requirements</th>
+                            <th class="px-4 py-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($applications as $application)
-                            <tr class="border-t border-gray-200 hover:bg-gray-50">
-                                <td class="px-4 py-2 text-gray-800">
+                            <tr class="hover:bg-indigo-50 transition-colors">
+                                <td class="border px-4 py-3 text-center font-semibold text-gray-500">{{ $loop->iteration }}</td>
+                                <td class="border px-4 py-3 font-medium text-gray-900">
                                     <a href="#" class="text-blue-600 hover:underline font-medium"
                                         @click.prevent="showModal = true; applicant = {
                                             ...{{ json_encode($application->student) }},
@@ -45,10 +54,33 @@
                                         {{ $application->student->user->name ?? 'N/A' }}
                                     </a>
                                 </td>
-                                <td class="px-4 py-2 text-gray-800">{{ $application->opportunity->title ?? '-' }}</td>
-                                <td class="px-4 py-2 text-gray-800">{{ ucfirst($application->status) }}</td>
-                                <td class="px-4 py-2 text-gray-800">{{ $application->created_at->format('M d, Y') }}</td>
-                                <td class="px-4 py-2 text-gray-800">
+                                <td class="border px-4 py-3">{{ $application->opportunity->title ?? '-' }}</td>
+                                <td class="border px-4 py-3">
+                                    <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold
+                                        {{ $application->status === 'accepted' ? 'bg-green-100 text-green-700' : ($application->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">
+                                        {{ ucfirst($application->status) }}
+                                    </span>
+                                </td>
+                                <td class="border px-4 py-3 text-gray-700">{{ $application->created_at->format('M d, Y') }}</td>
+                                <td class="border px-4 py-3">
+                                    @php
+                                        $matcher = app(\App\Services\SkillMatcher::class);
+                                        $studentSkills = $application->student && $application->student->skills ? $application->student->skills->pluck('name')->toArray() : [];
+                                        $opportunitySkills = $application->opportunity && $application->opportunity->skills ? $application->opportunity->skills->pluck('name')->toArray() : [];
+                                        $matchedSkills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
+                                        $missingSkills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
+                                        $matchMessage = $matcher->getMatchMessage(
+                                            $application->rf_score ?? $application->match_score ?? 0,
+                                            $matchedSkills,
+                                            $missingSkills,
+                                            $opportunitySkills,
+                                            $application->student->course ?? null,
+                                            $application->student->academic_field ?? null,
+                                            $application->student->gpa ?? null,
+                                            $application->student->interests ? (is_array($application->student->interests) ? $application->student->interests : explode(',', $application->student->interests)) : null,
+                                            auth()->user()->role ?? null
+                                        );
+                                    @endphp
                                     @if(isset($application->match_score))
                                         <span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
                                             {{ round($application->match_score) }}%
@@ -60,27 +92,32 @@
                                             @else Low Match
                                             @endif
                                         </span>
-                                        <div class="mt-2 text-xs text-gray-700">
-                                            <strong>TF-IDF:</strong> {{ round($application->tfidf_score ?? 0) }}%
-                                            <strong>LogReg:</strong> {{ round($application->logreg_score ?? 0) }}%
-                                            <strong>RF:</strong> {{ round($application->rf_score ?? 0) }}%
+                                        <div class="mt-2 text-xs text-indigo-700 bg-indigo-50 rounded p-2">
+                                            <strong>XAI:</strong> {{ $matchMessage }}
                                         </div>
-                                        <div class="mt-2 text-xs text-gray-700">
-                                            <strong>Applicant Skills:</strong> {{ implode(', ', $application->student->skills->pluck('name')->toArray()) }}<br>
-                                            <strong>Required Skills:</strong> {{ implode(', ', $application->opportunity->skills->pluck('name')->toArray()) }}
-                                        </div>
-                                        <form method="POST" action="{{ route('admin.applications.generate_match', $application->id) }}" class="mt-2">
-                                            @csrf
-                                            <button type="submit" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 text-xs">Regenerate Match</button>
-                                        </form>
-                                    @else
-                                        <form method="POST" action="{{ route('admin.applications.generate_match', $application->id) }}">
-                                            @csrf
-                                            <button type="submit" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 text-xs">Generate Match</button>
-                                        </form>
                                     @endif
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="border px-4 py-3">
+                                    @foreach($studentSkills as $skill)
+                                        @if(in_array($skill, $matchedSkills))
+                                            <span class="inline-block bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded mr-1 mb-1 font-semibold shadow-sm">{{ $skill }}</span>
+                                        @else
+                                            <span class="inline-block bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded mr-1 mb-1">{{ $skill }}</span>
+                                        @endif
+                                    @endforeach
+                                </td>
+                                <td class="border px-4 py-3">
+                                    @foreach($opportunitySkills as $skill)
+                                        @if(in_array($skill, $matchedSkills))
+                                            <span class="inline-block bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded mr-1 mb-1 font-semibold shadow-sm">{{ $skill }}</span>
+                                        @elseif(in_array($skill, $missingSkills))
+                                            <span class="inline-block bg-red-50 text-red-700 border border-red-200 px-2 py-1 rounded mr-1 mb-1 font-bold shadow-sm animate-pulse">{{ $skill }}</span>
+                                        @else
+                                            <span class="inline-block bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded mr-1 mb-1">{{ $skill }}</span>
+                                        @endif
+                                    @endforeach
+                                </td>
+                                <td class="border px-4 py-3">
                                     <a href="{{ route('applications.approve', $application->id) }}" class="text-green-600 hover:underline font-medium ml-4">Approve</a>
                                     <a href="{{ route('applications.reject', $application->id) }}" class="text-red-600 hover:underline font-medium ml-4">Reject</a>
                                 </td>

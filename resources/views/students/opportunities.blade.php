@@ -7,6 +7,7 @@
 @section('title', 'My Opportunities')
 @section('content')
 <div class="max-w-5xl mx-auto py-10">
+    <x-ml-loader />
     <h1 class="text-2xl font-bold mb-6">Active Opportunities</h1>
     @if($opportunities->count())
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

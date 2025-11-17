@@ -304,13 +304,13 @@ PYTHON;
         if ($interests && is_array($interests) && count($interests)) $profileFactors = array_merge($profileFactors, $interests);
         $profileSummary = count($profileFactors) ? implode(', ', $profileFactors) : '';
         $message = '';
-            if ($viewerRole === 'organization') {
+        if ($viewerRole === 'organization' || $viewerRole === 'admin') {
             if ($category === 'excellent') {
                 $message = 'This applicant meets all required skills (' . implode(', ', $matched) . ').';
             } elseif ($category === 'good') {
                 $message = 'Strong applicant: most required skills matched (' . implode(', ', $matched) . '). Missing: ' . implode(', ', $missing) . '. Profile: ' . $profileSummary;
             } elseif ($category === 'fair') {
-                $message = 'Some relevant skills (' . implode(', ', $matched) . '), missing: ' . implode(', ', $missing) . '. Profile factors (' . $profileSummary . ') may compensate.';
+                $message = 'Applicant has some relevant skills (' . implode(', ', $matched) . '), but is missing: ' . implode(', ', $missing) . '. Profile factors (' . $profileSummary . ') may compensate.';
             } else {
                 $message = 'Low skill match (' . implode(', ', $matched) . '). Missing: ' . implode(', ', $missing) . '. Profile: ' . $profileSummary;
             }

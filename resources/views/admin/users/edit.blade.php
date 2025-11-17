@@ -38,7 +38,8 @@
                 <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
                 <select name="role" id="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>User</option>
+                    <option value="student" {{ old('role', $user->role) == 'student' ? 'selected' : '' }}>Student</option>
+                    <option value="organization" {{ old('role', $user->role) == 'organization' ? 'selected' : '' }}>Organization</option>
                 </select>
             </div>
 
