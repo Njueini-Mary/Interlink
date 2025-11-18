@@ -92,10 +92,9 @@
                 {{-- XAI Section --}}
                 @if(isset($application->matched_skills) || isset($application->missing_skills) || isset($application->match_message))
                 <div class="mt-2 p-2 bg-gray-50 rounded">
-                    <div class="text-xs text-gray-700 mb-1 font-semibold">Explainable AI (XAI):</div>
-                    @if(isset($application->match_message))
-                        <div class="text-xs text-indigo-700 mb-1">{{ $application->match_message }}</div>
-                    @endif
+                    <div class="text-sm text-gray-700 bg-gray-50 rounded p-2 mb-1">
+                        {{ $application->match_message ? __(str_replace(['Fair match.', 'Low match.', 'Excellent match.', 'Good match.', 'Moderate match.'], ['This applicant is a good fit for this opportunity.', 'This applicant may need to improve their skills for this opportunity.', 'This applicant is an excellent fit for this opportunity!', 'This applicant is a strong candidate for this opportunity.', 'This applicant is a decent fit for this opportunity.'], $application->match_message)) : 'This applicant may be a good fit.' }}
+                    </div>
                     @if(isset($application->matched_skills) && count($application->matched_skills))
                         <div class="text-xs text-green-700 mb-1">Matched Skills: <span class="font-semibold">{{ implode(', ', $application->matched_skills) }}</span></div>
                     @endif

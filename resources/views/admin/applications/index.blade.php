@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function() {
 							@else Low Match
 							@endif
 						</span>
-						<div class="mt-2 text-xs text-indigo-700 bg-indigo-50 rounded p-2">
-							<strong>XAI:</strong> {{ $matchMessage }}
+						<div class="mt-2 text-sm text-gray-700 bg-gray-50 rounded p-2">
+							{{ $matchMessage ? __(str_replace(['Fair match.', 'Low match.', 'Excellent match.', 'Good match.', 'Moderate match.'], ['This applicant is a good fit for this opportunity.', 'This applicant may need to improve their skills for this opportunity.', 'This applicant is an excellent fit for this opportunity!', 'This applicant is a strong candidate for this opportunity.', 'This applicant is a decent fit for this opportunity.'], $matchMessage)) : 'This applicant may be a good fit.' }}
 						</div>
 						<form method="POST" action="{{ route('admin.applications.generate_match', $application->id) }}" class="mt-2" onsubmit="showMLLoader()">
 							@csrf

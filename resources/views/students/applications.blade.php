@@ -46,8 +46,8 @@
                             @endif
                         </span>
                     </div>
-                    <div class="mb-2 text-xs text-indigo-700 bg-indigo-50 rounded p-2">
-                        <strong>XAI:</strong> {{ $application->match_message ?? 'No explanation available.' }}
+                    <div class="mb-2 text-sm text-gray-700 bg-gray-50 rounded p-2">
+                        {{ $application->match_message ? __(str_replace(['Fair match.', 'Low match.', 'Excellent match.', 'Good match.', 'Moderate match.'], ['You are a good fit for this opportunity.', 'You may need to improve your skills for this opportunity.', 'You are an excellent fit for this opportunity!', 'You are a strong candidate for this opportunity.', 'You are a decent fit for this opportunity.'], $application->match_message)) : 'This opportunity may be a good fit for you.' }}
                     </div>
                     <p class="text-gray-600 mb-2">Submitted on: <span class="font-medium">{{ $application->created_at->format('M d, Y') }}</span></p>
                     <span class="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-semibold mb-4">{{ ucfirst($application->status) }}</span>

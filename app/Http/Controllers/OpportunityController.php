@@ -67,8 +67,78 @@ class OpportunityController extends Controller
         $opportunity = Opportunity::with(['organization', 'category', 'skills', 'user'])
             ->findOrFail($id);
         $user = Auth::user();
-        // ML match scores will be calculated manually via button
-        return view('opportunities.show', compact('opportunity'));
+        $mlData = null;
+        if ($user && $user->role === 'student' && $user->student) {
+            $student = $user->student;
+            $application = $student->applications->where('opportunity_id', $opportunity->id)->first();
+            $requiredSkills = $opportunity->skills->pluck('name')->toArray();
+            $applicantSkills = $student->skills->pluck('name')->toArray();
+            $matcher = app(\App\Services\SkillMatcher::class);
+            if ($application) {
+                $matchedSkills = is_string($application->matched_skills) ? json_decode($application->matched_skills, true) : ($application->matched_skills ?? []);
+                $missingSkills = is_string($application->missing_skills) ? json_decode($application->missing_skills, true) : ($application->missing_skills ?? []);
+                if (!is_array($matchedSkills) || !count($matchedSkills)) {
+                    $matchedSkills = $matcher->getMatchedSkills($requiredSkills, $applicantSkills);
+                }
+                if (!is_array($missingSkills) || !count($missingSkills)) {
+                    $missingSkills = $matcher->getMissingSkills($requiredSkills, $applicantSkills);
+                }
+                $mlData = [
+                    'tfidfScore' => $application->tfidf_score ?? 0,
+                    'logregScore' => $application->logreg_score ?? 0,
+                    'matchScore' => $application->rf_score ?? $application->match_score ?? 0,
+                    'requiredSkills' => $requiredSkills,
+                    'applicantSkills' => $applicantSkills,
+                    'matchedSkills' => $matchedSkills,
+                    'missingSkills' => $missingSkills,
+                    'matchMessage' => $application->match_message ?? $matcher->getMatchMessage(
+                        $application->rf_score ?? $application->match_score ?? 0,
+                        $matchedSkills,
+                        $missingSkills,
+                        $requiredSkills,
+                        $student->course ?? null,
+                        $student->academic_field ?? null,
+                        $student->gpa ?? null,
+                        $student->interests ?? null,
+                        'student'
+                    ),
+                    'course' => $student->course ?? null,
+                    'academicField' => $student->academic_field ?? null,
+                    'gpa' => $student->gpa ?? null,
+                    'interests' => $student->interests ?? null,
+                ];
+            } else {
+                // No application yet, calculate on the fly
+                $matchedSkills = $matcher->getMatchedSkills($requiredSkills, $applicantSkills);
+                $missingSkills = $matcher->getMissingSkills($requiredSkills, $applicantSkills);
+                $mlScores = $matcher->getMLScores(implode(' ', $applicantSkills), implode(' ', $requiredSkills));
+                $mlData = [
+                    'tfidfScore' => $mlScores['tfidf'] ?? 0,
+                    'logregScore' => $mlScores['logreg'] ?? 0,
+                    'matchScore' => $mlScores['rf'] ?? 0,
+                    'requiredSkills' => $requiredSkills,
+                    'applicantSkills' => $applicantSkills,
+                    'matchedSkills' => $matchedSkills,
+                    'missingSkills' => $missingSkills,
+                    'matchMessage' => $matcher->getMatchMessage(
+                        $mlScores['rf'] ?? 0,
+                        $matchedSkills,
+                        $missingSkills,
+                        $requiredSkills,
+                        $student->course ?? null,
+                        $student->academic_field ?? null,
+                        $student->gpa ?? null,
+                        $student->interests ?? null,
+                        'student'
+                    ),
+                    'course' => $student->course ?? null,
+                    'academicField' => $student->academic_field ?? null,
+                    'gpa' => $student->gpa ?? null,
+                    'interests' => $student->interests ?? null,
+                ];
+            }
+        }
+        return view('opportunities.show', compact('opportunity', 'mlData'));
     }
 
     /**
