@@ -27,7 +27,7 @@
                             <th class="px-4 py-3">Opportunity</th>
                             <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3">Submitted</th>
-                            <th class="px-4 py-3">Match Score</th>
+                            <th class="px-4 py-3">ML Match (TFIDF)</th>
                             <th class="px-4 py-3">Applicant Skills</th>
                             <th class="px-4 py-3 rounded-tr-lg">Requirements</th>
                             <th class="px-4 py-3">Actions</th>
@@ -70,7 +70,7 @@
                                         $matchedSkills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
                                         $missingSkills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
                                         $matchMessage = $matcher->getMatchMessage(
-                                            $application->rf_score ?? $application->match_score ?? 0,
+                                            $application->tfidf_score ?? 0,
                                             $matchedSkills,
                                             $missingSkills,
                                             $opportunitySkills,
@@ -81,14 +81,14 @@
                                             auth()->user()->role ?? null
                                         );
                                     @endphp
-                                    @if(isset($application->match_score))
-                                        <span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
-                                            {{ round($application->match_score) }}%
+                                    @if(isset($application->tfidf_score))
+                                        <span class="font-bold {{ $application->tfidf_score >= 80 ? 'text-green-600' : ($application->tfidf_score >= 60 ? 'text-blue-600' : ($application->tfidf_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
+                                            {{ round($application->tfidf_score) }}%
                                         </span>
                                         <span class="text-xs text-gray-500 ml-2">
-                                            @if($application->match_score >= 80) Excellent Match
-                                            @elseif($application->match_score >= 60) Good Match
-                                            @elseif($application->match_score >= 40) Moderate Match
+                                            @if($application->tfidf_score >= 80) Excellent Match
+                                            @elseif($application->tfidf_score >= 60) Good Match
+                                            @elseif($application->tfidf_score >= 40) Moderate Match
                                             @else Low Match
                                             @endif
                                         </span>

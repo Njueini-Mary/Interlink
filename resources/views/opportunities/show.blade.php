@@ -104,12 +104,12 @@
                                     <div class="p-4 rounded shadow-sm" style="background: #f8fafc;">
                                         <h5 class="mb-3" style="color: #007bff;">How well do you match?</h5>
                                         <div class="mb-3">
-                                            <span class="badge bg-primary me-2">Your Match Score: <strong>{{ round($mlData['matchScore'] ?? 0) }}%</strong></span>
-                                            @if(($mlData['matchScore'] ?? 0) >= 80)
+                                            <span class="badge bg-primary me-2">Your Match Score: <strong>{{ round($mlData['tfidf'] ?? $mlData['matchScore'] ?? 0) }}%</strong></span>
+                                            @if(($mlData['tfidf'] ?? $mlData['matchScore'] ?? 0) >= 80)
                                                 <span class="badge bg-success">Excellent fit!</span>
-                                            @elseif(($mlData['matchScore'] ?? 0) >= 60)
+                                            @elseif(($mlData['tfidf'] ?? $mlData['matchScore'] ?? 0) >= 60)
                                                 <span class="badge bg-info text-dark">Good fit</span>
-                                            @elseif(($mlData['matchScore'] ?? 0) >= 40)
+                                            @elseif(($mlData['tfidf'] ?? $mlData['matchScore'] ?? 0) >= 40)
                                                 <span class="badge bg-warning text-dark">Fair fit</span>
                                             @else
                                                 <span class="badge bg-danger">Low match</span>

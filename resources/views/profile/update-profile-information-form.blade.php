@@ -186,6 +186,22 @@
               @endif
 
 
+              <div class="mb-4">
+                <label for="gpa" class="form-label">GPA</label>
+                <input type="number" step="0.01" id="gpa" name="gpa" class="form-control"
+                  value="{{ old('gpa', $user->student->gpa ?? '') }}" placeholder="E.g., 3.8">
+              </div>
+              <div class="mb-4">
+                <label for="interests" class="form-label">Interests (comma separated)</label>
+                <input type="text" id="interests" name="interests" class="form-control"
+                  value="{{ old('interests', $user->student->interests ?? '') }}" placeholder="E.g., Data Science, AI, Web Development">
+              </div>
+              <div class="mb-4">
+                <label for="activities" class="form-label">Activities/Projects</label>
+                <textarea id="activities" name="activities" class="form-control" rows="2"
+                  placeholder="E.g., Hackathons, Open Source, Research">{{ old('activities', $user->student->activities ?? '') }}</textarea>
+              </div>
+
               @elseif($user->role === 'organization')
               <h4 class="mb-3">Organization Details</h4>
               <div class="mb-4">

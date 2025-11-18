@@ -326,10 +326,38 @@ class ApplicationController extends Controller
             return redirect()->back()->with('error', 'Unauthorized.');
         }
     $matcher = new \App\Services\SkillMatcher();
-    $studentSkills = $application->student->skills->pluck('name')->toArray();
-    $opportunitySkills = $application->opportunity->skills->pluck('name')->toArray();
-    $studentProfile = ($application->student->bio ?? '') . ' ' . ($application->student->interests ?? '') . ' ' . ($application->student->course ?? '') . ' ' . ($application->student->university ?? '');
-    $opportunityProfile = ($application->opportunity->description ?? '') . ' ' . ($application->opportunity->title ?? '');
+    $student = $application->student;
+    $opportunity = $application->opportunity;
+    $studentSkills = $student->skills->pluck('name')->toArray();
+    $opportunitySkills = $opportunity->skills->pluck('name')->toArray();
+    // Build comprehensive student profile string
+    $studentProfile = implode(' ', [
+        $student->bio ?? '',
+        $student->interests ?? '',
+        $student->activities ?? '',
+        $student->course ?? '',
+        $student->year ?? '',
+        $student->university ?? '',
+        $student->academic_field ?? '',
+        $student->gpa ?? '',
+        $student->is_available ? 'available' : 'not available',
+        $student->rating ?? '',
+        $student->rating_count ?? '',
+        $student->resume ?? '',
+        $student->organizations ?? ''
+    ]);
+    // Build comprehensive opportunity profile string
+    $opportunityProfile = implode(' ', [
+        $opportunity->description ?? '',
+        $opportunity->title ?? '',
+        $opportunity->industry ?? '',
+        $opportunity->min_gpa ?? '',
+        $opportunity->interests ?? '',
+        $opportunity->activities ?? '',
+        $opportunity->organizations ?? '',
+        $opportunity->course ?? '',
+        $opportunity->academic_field ?? ''
+    ]);
     $studentText = implode(' ', $studentSkills) . ' ' . $studentProfile;
     $opportunityText = implode(' ', $opportunitySkills) . ' ' . $opportunityProfile;
     $mlScores = $matcher->getMLScores($studentText, $opportunityText);
@@ -345,15 +373,15 @@ class ApplicationController extends Controller
         $application->matched_skills,
         $application->missing_skills,
         $opportunitySkills,
-        $application->student->course ?? null,
-        $application->student->academic_field ?? null,
-        $application->student->gpa ?? null,
-        $application->student->interests ? (is_array($application->student->interests) ? $application->student->interests : explode(',', $application->student->interests)) : null
+        $student->course ?? null,
+        $student->academic_field ?? null,
+        $student->gpa ?? null,
+        $student->interests ? (is_array($student->interests) ? $student->interests : explode(',', $student->interests)) : null
     );
-    $application->xai_course = $application->student->course ?? '';
-    $application->xai_academic_field = $application->student->academic_field ?? '';
-    $application->xai_gpa = $application->gpa ?? '';
-    $application->xai_interests = $application->interests ?? $application->student->interests ?? '';
+    $application->xai_course = $student->course ?? '';
+    $application->xai_academic_field = $student->academic_field ?? '';
+    $application->xai_gpa = $student->gpa ?? '';
+    $application->xai_interests = $student->interests ?? '';
     $application->save();
     return redirect()->back()->with('success', 'ML match score and XAI recalculated and saved for this application!');
     }

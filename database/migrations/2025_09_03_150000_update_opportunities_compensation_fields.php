@@ -16,7 +16,7 @@ return new class extends Migration {
             }
             // Add compensation_type
             if (!Schema::hasColumn('opportunities', 'compensation_type')) {
-                $table->enum('compensation_type', ['monthly', 'hourly'])->default('monthly')->after('status');
+                $table->enum('compensation_type', ['monthly', 'hourly', 'stipend'])->default('monthly')->after('status');
             }
             // Add hourly rate fields
             if (!Schema::hasColumn('opportunities', 'min_hourly_rate')) {

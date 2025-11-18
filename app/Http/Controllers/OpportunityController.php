@@ -111,7 +111,37 @@ class OpportunityController extends Controller
                 // No application yet, calculate on the fly
                 $matchedSkills = $matcher->getMatchedSkills($requiredSkills, $applicantSkills);
                 $missingSkills = $matcher->getMissingSkills($requiredSkills, $applicantSkills);
-                $mlScores = $matcher->getMLScores(implode(' ', $applicantSkills), implode(' ', $requiredSkills));
+                // Build comprehensive student and opportunity profile strings
+                $studentProfile = implode(' ', [
+                    $student->bio ?? '',
+                    $student->interests ?? '',
+                    $student->activities ?? '',
+                    $student->course ?? '',
+                    $student->year ?? '',
+                    $student->university ?? '',
+                    $student->academic_field ?? '',
+                    $student->gpa ?? '',
+                    $student->is_available ? 'available' : 'not available',
+                    $student->rating ?? '',
+                    $student->rating_count ?? '',
+                    $student->resume ?? '',
+                    $student->organizations ?? ''
+                ]);
+                $opportunityProfile = implode(' ', [
+                    $opportunity->description ?? '',
+                    $opportunity->title ?? '',
+                    $opportunity->industry ?? '',
+                    $opportunity->min_gpa ?? '',
+                    $opportunity->interests ?? '',
+                    $opportunity->activities ?? '',
+                    $opportunity->organizations ?? '',
+                    $opportunity->course ?? '',
+                    $opportunity->academic_field ?? ''
+                ]);
+                $mlScores = $matcher->getMLScores(
+                    implode(' ', $applicantSkills) . ' ' . $studentProfile,
+                    implode(' ', $requiredSkills) . ' ' . $opportunityProfile
+                );
                 $mlData = [
                     'tfidfScore' => $mlScores['tfidf'] ?? 0,
                     'logregScore' => $mlScores['logreg'] ?? 0,
@@ -180,6 +210,10 @@ class OpportunityController extends Controller
             'existing_skills' => ['nullable', 'array'],
             'existing_skills.*' => ['uuid', 'exists:skills,id'], // Validate each skill ID
             'new_skills'      => ['nullable', 'string'],
+            'industry'      => ['nullable', 'string', 'max:255'],
+            'min_gpa'       => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'interests'     => ['nullable', 'string', 'max:1000'],
+            'activities'    => ['nullable', 'string', 'max:2000'],
         ];
 
         $validated = Validator::make($input, $rules)->validate();
@@ -208,6 +242,10 @@ class OpportunityController extends Controller
                 'max_rate'          => $validated['compensation_type'] === 'hourly' ? $validated['max_rate'] : null,
                 'currency'          => $validated['currency'],
                 'user_id'           => $user->id, // Save the creator's user_id
+                'industry'          => $validated['industry'] ?? null,
+                'min_gpa'           => $validated['min_gpa'] ?? null,
+                'interests'         => $validated['interests'] ?? null,
+                'activities'        => $validated['activities'] ?? null,
             ]);
 
             if ($request->filled('existing_skills')) {
@@ -345,12 +383,37 @@ class OpportunityController extends Controller
             return redirect()->back()->with('error', 'Only students can calculate matches.');
         }
         $matcher = new \App\Services\SkillMatcher();
-        $studentSkills = $user->student->skills->pluck('name')->toArray();
-        $studentProfile = $user->student->course . ' ' . ($user->student->academic_field ?? '');
+        $student = $user->student;
+        $studentSkills = $student->skills->pluck('name')->toArray();
+        $studentProfile = implode(' ', [
+            $student->bio ?? '',
+            $student->interests ?? '',
+            $student->activities ?? '',
+            $student->course ?? '',
+            $student->year ?? '',
+            $student->university ?? '',
+            $student->academic_field ?? '',
+            $student->gpa ?? '',
+            $student->is_available ? 'available' : 'not available',
+            $student->rating ?? '',
+            $student->rating_count ?? '',
+            $student->resume ?? '',
+            $student->organizations ?? ''
+        ]);
         $opportunities = Opportunity::with('skills')->get();
         foreach ($opportunities as $opp) {
             $oppSkills = $opp->skills->pluck('name')->toArray();
-            $oppProfile = $opp->title . ' ' . $opp->description;
+            $oppProfile = implode(' ', [
+                $opp->description ?? '',
+                $opp->title ?? '',
+                $opp->industry ?? '',
+                $opp->min_gpa ?? '',
+                $opp->interests ?? '',
+                $opp->activities ?? '',
+                $opp->organizations ?? '',
+                $opp->course ?? '',
+                $opp->academic_field ?? ''
+            ]);
             $mlScores = $matcher->getMLScores(
                 implode(' ', $studentSkills) . ' ' . $studentProfile,
                 implode(' ', $oppSkills) . ' ' . $oppProfile

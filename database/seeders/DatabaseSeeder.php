@@ -26,8 +26,13 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             OrganizationSeeder::class,
             StudentSeeder::class,
+            OpportunitySeeder::class,
+            ApplicationSeeder::class,
             ActivitySeeder::class,
             NotificationSeeder::class,
+            SkillSeeder::class,
+            StudentSkillSeeder::class,
+            OpportunitySkillSeeder::class,
         ]);
     }
 }

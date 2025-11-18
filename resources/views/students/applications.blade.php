@@ -24,6 +24,7 @@
                     $opportunitySkills = $application->opportunity->skills->pluck('name')->toArray() ?? [];
                     $matchedSkills = is_array($application->matched_skills) ? $application->matched_skills : (json_decode($application->matched_skills, true) ?? []);
                     $missingSkills = is_array($application->missing_skills) ? $application->missing_skills : (json_decode($application->missing_skills, true) ?? []);
+                    $tfidf = $application->tfidf_score ?? ($application->ml_scores['tfidf'] ?? 0);
                 @endphp
                 <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col justify-between border border-gray-200 hover:shadow-2xl transition-shadow">
                     <div class="flex items-center mb-4">
@@ -35,13 +36,13 @@
                         <h2 class="text-xl font-semibold text-gray-800">{{ $application->opportunity->title ?? 'N/A' }}</h2>
                     </div>
                     <div class="mb-2">
-                        <span class="font-bold {{ $application->match_score >= 80 ? 'text-green-600' : ($application->match_score >= 60 ? 'text-blue-600' : ($application->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
-                            {{ round($application->match_score) }}% Match
+                        <span class="font-bold {{ $tfidf >= 80 ? 'text-green-600' : ($tfidf >= 60 ? 'text-blue-600' : ($tfidf >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
+                            {{ round($tfidf) }}% Match
                         </span>
                         <span class="text-xs text-gray-500 ml-2">
-                            @if($application->match_score >= 80) Excellent Match
-                            @elseif($application->match_score >= 60) Good Match
-                            @elseif($application->match_score >= 40) Moderate Match
+                            @if($tfidf >= 80) Excellent Match
+                            @elseif($tfidf >= 60) Good Match
+                            @elseif($tfidf >= 40) Moderate Match
                             @else Low Match
                             @endif
                         </span>

@@ -27,11 +27,38 @@ class DashboardController extends Controller
             $oppProfile = ($opp->title ?? '') . ' ' . ($opp->description ?? '');
             foreach ($opp->applications as $app) {
                 if ($app->student) {
-                    $studentSkills = $app->student->skills->pluck('name')->toArray();
-                    $studentProfile = ($app->student->bio ?? '') . ' ' . ($app->student->interests ?? '') . ' ' . ($app->student->course ?? '') . ' ' . ($app->student->university ?? '');
-                    $studentText = implode(' ', $studentSkills) . ' ' . $studentProfile;
-                    $opportunityText = implode(' ', $oppSkills) . ' ' . $oppProfile;
-                    $mlScores = $mlMatcher->getMLScores($studentText, $opportunityText);
+                    $student = $app->student;
+                    $studentSkills = $student->skills->pluck('name')->toArray();
+                    $studentProfile = implode(' ', [
+                        $student->bio ?? '',
+                        $student->interests ?? '',
+                        $student->activities ?? '',
+                        $student->course ?? '',
+                        $student->year ?? '',
+                        $student->university ?? '',
+                        $student->academic_field ?? '',
+                        $student->gpa ?? '',
+                        $student->is_available ? 'available' : 'not available',
+                        $student->rating ?? '',
+                        $student->rating_count ?? '',
+                        $student->resume ?? '',
+                        $student->organizations ?? ''
+                    ]);
+                    $opportunityProfile = implode(' ', [
+                        $opp->description ?? '',
+                        $opp->title ?? '',
+                        $opp->industry ?? '',
+                        $opp->min_gpa ?? '',
+                        $opp->interests ?? '',
+                        $opp->activities ?? '',
+                        $opp->organizations ?? '',
+                        $opp->course ?? '',
+                        $opp->academic_field ?? ''
+                    ]);
+                    $mlScores = $mlMatcher->getMLScores(
+                        implode(' ', $studentSkills) . ' ' . $studentProfile,
+                        implode(' ', $oppSkills) . ' ' . $opportunityProfile
+                    );
                     $app->match_score = $mlScores['rf'];
                     $app->tfidf_score = $mlScores['tfidf'];
                     $app->logreg_score = $mlScores['logreg'];

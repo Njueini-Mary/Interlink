@@ -143,17 +143,16 @@
             <div class="card h-100 shadow-sm border-0 hover-lift">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between mb-3">
-                        <span
-                            class="badge bg-info mb-2">Internship</span>
+                        <span class="badge bg-info mb-2">Internship</span>
                         <span class="text-muted small">{{ $opportunity->created_at->diffForHumans() }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title mb-0">{{ $opportunity->title }}</h5>
-                    <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.jpg') }}" 
-                        alt="{{ $opportunity->organization->name }}" 
-                        class="rounded-circle" 
-                        width="40" 
-                        height="40">
+                        <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.jpg') }}" 
+                            alt="{{ $opportunity->organization->name }}" 
+                            class="rounded-circle" 
+                            width="40" 
+                            height="40">
                     </div>
                     <p class="text-muted mb-3 small">
                         <i class="fas fa-building me-1"></i> {{ $opportunity->organization->name }}
@@ -173,6 +172,51 @@
                         <span class="badge bg-light text-dark">+{{ $opportunity->skills->count() - 3 }} more</span>
                         @endif
                     </div>
+
+                    @auth
+                        @if(auth()->user()->role === 'student' && auth()->user()->student)
+                            @php
+                                $student = auth()->user()->student;
+                                $studentSkills = $student->skills->pluck('name')->toArray();
+                                $opportunitySkills = $opportunity->skills->pluck('name')->toArray();
+                                $matcher = app(\App\Services\SkillMatcher::class);
+                                $mlScores = $matcher->getMLScores(
+                                    implode(' ', $studentSkills) . ' ' . ($student->bio ?? ''),
+                                    implode(' ', $opportunitySkills) . ' ' . ($opportunity->description ?? '')
+                                );
+                                $matchedSkills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
+                                $missingSkills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
+                                $xai = $matcher->getMatchMessage(
+                                    $mlScores['tfidf'] ?? 0,
+                                    $matchedSkills,
+                                    $missingSkills,
+                                    $opportunitySkills,
+                                    $student->course ?? null,
+                                    $student->academic_field ?? null,
+                                    $student->gpa ?? null,
+                                    $student->interests ? (is_array($student->interests) ? $student->interests : explode(',', $student->interests)) : null,
+                                    $student->year ?? null,
+                                    $student->university ?? null,
+                                    null,
+                                    [
+                                        'skills' => ['matched' => $matchedSkills, 'missing' => $missingSkills],
+                                        'course' => ['matched' => [$student->course], 'missing' => []],
+                                        'academic_field' => ['matched' => [$student->academic_field], 'missing' => []],
+                                        'gpa' => ['matched' => [$student->gpa], 'missing' => []],
+                                        'interests' => ['matched' => is_array($student->interests) ? $student->interests : explode(',', $student->interests), 'missing' => []],
+                                    ]
+                                );
+                            @endphp
+                            <div class="mb-2">
+                                <span class="fw-bold text-primary">Your ML Match: {{ round($mlScores['tfidf'] ?? 0) }}%</span>
+                                <span class="text-muted small ms-2">(TFIDF)</span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="fw-bold text-gray-700">Why this score?</span>
+                                <div class="text-sm text-indigo-700 bg-indigo-50 rounded p-2 mt-1">{{ $xai }}</div>
+                            </div>
+                        @endif
+                    @endauth
 
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <div>

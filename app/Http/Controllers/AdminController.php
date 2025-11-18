@@ -25,6 +25,181 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class AdminController extends Controller
 {
     /**
+     * Show the ML Reports dashboard for admins.
+     */
+    public function mlReports()
+    {
+        // Use the same logic as /admin/applications for real-time, accurate ML scores
+        $query = \App\Models\Application::with(['student.user', 'opportunity']);
+        // Support search and status filter if present
+        $search = request('search');
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('student.user', function($qu) use ($search) {
+                    $qu->where('name', 'like', "%$search%") ;
+                })
+                ->orWhereHas('opportunity', function($qu) use ($search) {
+                    $qu->where('title', 'like', "%$search%") ;
+                });
+            });
+        }
+        if (request('status')) {
+            $query->where('status', request('status'));
+        }
+        $applications = $query->orderByDesc('updated_at')->paginate(10)->appends(request()->except('page'));
+        // Metrics for summary cards
+        $mlMetrics = [
+            'totalMatches' => $applications->total(),
+            'avgMatchScore' => round($applications->avg('match_score'), 1),
+            'highMatches' => $applications->filter(fn($a) => $a->match_score >= 80)->count(),
+            'mediumMatches' => $applications->filter(fn($a) => $a->match_score >= 60 && $a->match_score < 80)->count(),
+            'lowMatches' => $applications->filter(fn($a) => $a->match_score < 60)->count(),
+        ];
+        $pdfReportUrl = route('admin.applications.export', ['type' => 'pdf']);
+        return view('admin.ml_reports', compact('mlMetrics', 'applications', 'pdfReportUrl'));
+    }
+
+        /**
+     * Recalculate all ML match scores for applications (admin action).
+     */
+    public function recalculateMLReports(Request $request)
+    {
+        // Export students and opportunities to CSV with combined features
+        $students = \App\Models\Student::with(['skills'])->get();
+        $opportunities = \App\Models\Opportunity::with(['skills'])->get();
+        $studentsCsv = storage_path('ml_models/batch_students.csv');
+        $oppsCsv = storage_path('ml_models/batch_opportunities.csv');
+        $studentsArr = [];
+        foreach ($students as $student) {
+            $studentsArr[] = [
+                'id' => $student->id,
+                'combined_features' => trim(implode(' ', array_filter([
+                    implode(',', $student->skills->pluck('name')->toArray()),
+                    $student->course,
+                    $student->academic_field,
+                    $student->interests,
+                    $student->bio,
+                    $student->activities,
+                    $student->organizations,
+                    $student->gpa,
+                    $student->is_available ? 'available' : 'not available',
+                    $student->rating,
+                    $student->rating_count,
+                    $student->resume
+                ])))
+            ];
+        }
+        $oppsArr = [];
+        foreach ($opportunities as $opp) {
+            $oppsArr[] = [
+                'id' => $opp->id,
+                'combined_features' => trim(implode(' ', array_filter([
+                    implode(',', $opp->skills->pluck('name')->toArray()),
+                    $opp->title,
+                    $opp->description,
+                    $opp->industry,
+                    $opp->min_gpa,
+                    $opp->interests,
+                    $opp->activities,
+                    $opp->organizations,
+                    $opp->course,
+                    $opp->academic_field
+                ])))
+            ];
+        }
+        // Write CSVs
+        $f = fopen($studentsCsv, 'w');
+        fputcsv($f, ['id','combined_features']);
+        foreach ($studentsArr as $row) fputcsv($f, $row);
+        fclose($f);
+        $f = fopen($oppsCsv, 'w');
+        fputcsv($f, ['id','combined_features']);
+        foreach ($oppsArr as $row) fputcsv($f, $row);
+        fclose($f);
+
+        // Run batch Python script
+        $vectorizer = storage_path('ml_models/tfidf_vectorizer.pkl');
+        $logreg = storage_path('ml_models/logreg_model.pkl');
+        $rf = storage_path('ml_models/rf_model.pkl');
+        $cmd = escapeshellcmd("python3 " . base_path('batch_calculate_match.py') . " $studentsCsv $oppsCsv $vectorizer $logreg $rf");
+        $output = shell_exec($cmd);
+        $lines = explode("\n", trim($output));
+        $header = array_map('trim', str_getcsv(array_shift($lines)));
+        $scoreMap = [];
+        foreach ($lines as $line) {
+            $cols = array_map('trim', str_getcsv($line));
+            if (count($cols) < 6) continue;
+            [$studentId, $oppId, $tfidf, $logreg, $rf, $skillOverlap] = $cols;
+            $scoreMap[$studentId.'_'.$oppId] = [
+                'tfidf' => (float)$tfidf,
+                'logreg' => (float)$logreg,
+                'rf' => (float)$rf,
+                'skill_overlap' => (float)$skillOverlap
+            ];
+        }
+
+        // Update all applications in bulk
+        $applications = \App\Models\Application::all();
+        $updated = 0;
+        $matcher = new \App\Services\SkillMatcher();
+        foreach ($applications as $app) {
+            $key = $app->student_id . '_' . $app->opportunity_id;
+            if (!isset($scoreMap[$key])) continue;
+            $mlScores = $scoreMap[$key];
+            $app->match_score = $mlScores['rf'];
+            $app->tfidf_score = $mlScores['tfidf'];
+            $app->logreg_score = $mlScores['logreg'];
+            $app->rf_score = $mlScores['rf'];
+            // User-friendly match message using feature-level matches (reuse previous logic)
+            $student = $app->student;
+            $opportunity = $app->opportunity;
+            if ($student && $opportunity) {
+                $studentSkills = $student->skills->pluck('name')->toArray();
+                $opportunitySkills = $opportunity->skills->pluck('name')->toArray();
+                $studentArr = [
+                    'skills' => $studentSkills,
+                    'course' => $student->course,
+                    'year' => $student->year,
+                    'university' => $student->university,
+                    'academic_field' => $student->academic_field,
+                    'gpa' => $student->gpa,
+                    'interests' => $student->interests,
+                ];
+                $opportunityArr = [
+                    'skills' => $opportunitySkills,
+                    'course' => $opportunity->course,
+                    'year' => $opportunity->year,
+                    'university' => $opportunity->university,
+                    'academic_field' => $opportunity->academic_field,
+                    'gpa' => $opportunity->min_gpa,
+                    'interests' => $opportunity->interests,
+                ];
+                $featureMatches = $matcher->getFeatureMatches($studentArr, $opportunityArr);
+                // Add skill overlap to the match message for realism
+                $overlapPercent = round($mlScores['skill_overlap'], 1);
+                $app->match_message = $matcher->getMatchMessage(
+                    $mlScores['rf'],
+                    $featureMatches['skills']['matched'] ?? [],
+                    $featureMatches['skills']['missing'] ?? [],
+                    $opportunitySkills,
+                    $student->course,
+                    $student->academic_field,
+                    $student->gpa,
+                    $student->interests,
+                    $student->year,
+                    $student->university,
+                    'admin',
+                    $featureMatches
+                ) . ($overlapPercent > 0 ? " | Skill Overlap: $overlapPercent%" : "");
+            }
+            $app->save();
+            $updated++;
+        }
+        return redirect()->back()->with('success', "All ML match scores recalculated for $updated applications (batch mode). Results now reflect the latest data and model.");
+
+
+    }
+    /**
      * Show the admin dashboard with all metrics.
      */
     public function dashboard()
@@ -361,7 +536,21 @@ class AdminController extends Controller
             $query->where('status', $r->input('status'));
         }
         $applications = $query->paginate(10)->appends($r->except('page'));
-        return view('admin.applications.index', compact('applications'));
+
+        // Metrics for graphs
+        $allApps = Application::all();
+        $statusMetrics = [
+            'pending' => $allApps->where('status', 'pending')->count(),
+            'accepted' => $allApps->where('status', 'accepted')->count(),
+            'rejected' => $allApps->where('status', 'rejected')->count(),
+        ];
+        $scoreMetrics = [
+            'excellent' => $allApps->where('match_score', '>=', 80)->count(),
+            'good' => $allApps->where('match_score', '>=', 60)->where('match_score', '<', 80)->count(),
+            'moderate' => $allApps->where('match_score', '>=', 40)->where('match_score', '<', 60)->count(),
+            'low' => $allApps->where('match_score', '<', 40)->count(),
+        ];
+        return view('admin.applications.index', compact('applications', 'statusMetrics', 'scoreMetrics'));
     }
     public function showApplication($id) { return view('admin.applications.show', ['application' => Application::findOrFail($id)]); }
     public function editApplication($id) { return view('admin.applications.edit', ['application' => Application::findOrFail($id)]); }

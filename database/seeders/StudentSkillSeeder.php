@@ -23,6 +23,20 @@ class StudentSkillSeeder extends Seeder
             'UX, marketing, communication',
             'SQL, R, business analytics, teamwork'
         ];
+        $activities = [
+            'Hackathons, research, open source',
+            'DevOps meetups, cloud labs',
+            'Marketing campaigns, design sprints',
+            'Frontend bootcamps, designathons',
+            'Business case competitions, analytics clubs'
+        ];
+        $organizations = [
+            'IEEE, Google DSC',
+            'Linux Foundation',
+            'Marketing Society',
+            'Design Club',
+            'Analytics Club'
+        ];
         foreach ($students as $i => $student) {
             $randomSkills = $skills->random(min(2, $skills->count()));
             foreach ($randomSkills as $skill) {
@@ -30,6 +44,8 @@ class StudentSkillSeeder extends Seeder
             }
             $student->bio = $bios[$i % count($bios)];
             $student->interests = $interests[$i % count($interests)];
+            $student->activities = $activities[$i % count($activities)];
+            $student->organizations = $organizations[$i % count($organizations)];
             $student->save();
         }
     }

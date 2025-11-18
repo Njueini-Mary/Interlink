@@ -46,21 +46,38 @@ class MLController extends Controller
             // Array to store opportunities with their match scores
             $matchedOpportunities = [];
             
-            // Extract student skills as an array of skill names
+            // Extract student skills and build full profile
             $studentSkills = $student->skills->pluck('name')->toArray();
-
-            // Iterate through each opportunity and calculate match score
+            $studentProfile = implode(' ', [
+                $student->bio ?? '',
+                $student->interests ?? '',
+                $student->activities ?? '',
+                $student->course ?? '',
+                $student->year ?? '',
+                $student->university ?? '',
+                $student->academic_field ?? '',
+                $student->gpa ?? '',
+                $student->is_available ? 'available' : 'not available',
+                $student->rating ?? '',
+                $student->rating_count ?? '',
+                $student->resume ?? '',
+                $student->organizations ?? ''
+            ]);
             foreach ($opportunities as $opportunity) {
-                // Extract required skills for the opportunity
                 $opportunitySkills = $opportunity->skills->pluck('name')->toArray();
-                
-                // Calculate match percentage using the ML matcher
-                $matchPercentage = $matcher->getMatchPercentage($opportunitySkills, $studentSkills);
-                
-                // Get binary prediction (1 for match, 0 for no match)
-                $prediction = $matcher->predictMatch($opportunitySkills, $studentSkills);
-                
-                // Only include opportunities with prediction = 1 (match)
+                $opportunityProfile = implode(' ', [
+                    $opportunity->description ?? '',
+                    $opportunity->title ?? '',
+                    $opportunity->industry ?? '',
+                    $opportunity->min_gpa ?? '',
+                    $opportunity->interests ?? '',
+                    $opportunity->activities ?? '',
+                    $opportunity->organizations ?? '',
+                    $opportunity->course ?? '',
+                    $opportunity->academic_field ?? ''
+                ]);
+                $matchPercentage = $matcher->getMatchPercentage($opportunitySkills, $studentSkills, $studentProfile, $opportunityProfile);
+                $prediction = $matcher->predictMatch($opportunitySkills, $studentSkills, $studentProfile, $opportunityProfile);
                 if ($prediction === 1) {
                     $matchedOpportunities[] = [
                         'opportunity' => $opportunity,

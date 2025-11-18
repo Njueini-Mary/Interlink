@@ -66,27 +66,27 @@
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @php
-                $sortedApplications = ($applications ?? collect())->sortByDesc('match_score');
+                $sortedApplications = ($applications ?? collect())->sortByDesc('tfidf_score');
             @endphp
             @forelse($sortedApplications as $application)
-            <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between {{ isset($application->match_score) && $application->match_score >= 60 ? 'border-l-4 border-green-500' : '' }}">
+            <div class="bg-white rounded-lg shadow p-4 flex flex-col justify-between {{ isset($application->tfidf_score) && $application->tfidf_score >= 60 ? 'border-l-4 border-green-500' : '' }}">
                 <div class="flex justify-between items-start mb-2">
                     <div class="font-semibold text-gray-800">{{ $application->student->name }}</div>
-                    @if(isset($application->match_score))
+                    @if(isset($application->tfidf_score))
                         <span class="text-xs font-bold px-2 py-1 rounded
-                            @if($application->match_score >= 80) bg-green-100 text-green-800
-                            @elseif($application->match_score >= 60) bg-blue-100 text-blue-800
-                            @elseif($application->match_score >= 40) bg-yellow-100 text-yellow-800
+                            @if($application->tfidf_score >= 80) bg-green-100 text-green-800
+                            @elseif($application->tfidf_score >= 60) bg-blue-100 text-blue-800
+                            @elseif($application->tfidf_score >= 40) bg-yellow-100 text-yellow-800
                             @else bg-gray-100 text-gray-800
                             @endif">
-                            {{ round($application->match_score) }}% Match
+                            {{ round($application->tfidf_score) }}% Match
                         </span>
                     @endif
                 </div>
                 <div class="text-xs text-gray-500">Applied for: {{ $application->opportunity->title }}</div>
                 <div class="text-xs text-gray-400">{{ $application->created_at->diffForHumans() }}</div>
                 <div class="text-xs text-gray-400">Status: <span class="font-medium">{{ ucfirst($application->status) }}</span></div>
-                @if(isset($application->match_score) && $application->match_score >= 60)
+                @if(isset($application->tfidf_score) && $application->tfidf_score >= 60)
                     <div class="text-xs text-green-600 font-medium mt-1">⭐ Highly Recommended</div>
                 @endif
                 {{-- XAI Section --}}

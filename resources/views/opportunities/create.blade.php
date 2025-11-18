@@ -145,6 +145,24 @@
         });
         </script>
 
+      <!-- ML/AI Matching Fields -->
+      <div class="mb-3">
+        <label for="industry" class="form-label">Industry/Field</label>
+        <input type="text" class="form-control" id="industry" name="industry" placeholder="E.g., Information Technology, Healthcare, Finance" value="{{ old('industry') }}">
+      </div>
+      <div class="mb-3">
+        <label for="min_gpa" class="form-label">Minimum GPA (if any)</label>
+        <input type="number" step="0.01" class="form-control" id="min_gpa" name="min_gpa" placeholder="E.g., 3.0" value="{{ old('min_gpa') }}">
+      </div>
+      <div class="mb-3">
+        <label for="interests" class="form-label">Relevant Interests (comma separated)</label>
+        <input type="text" class="form-control" id="interests" name="interests" placeholder="E.g., Data Science, AI, Web Development" value="{{ old('interests') }}">
+      </div>
+      <div class="mb-3">
+        <label for="activities" class="form-label">Activities/Projects (optional)</label>
+        <textarea class="form-control" id="activities" name="activities" rows="2" placeholder="E.g., Hackathons, Open Source, Research">{{ old('activities') }}</textarea>
+      </div>
+
       <!-- Deadline & New Category -->
       <div class="row g-4 mb-3">
         <div class="col-md-6">

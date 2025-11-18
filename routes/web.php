@@ -110,6 +110,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     $ctrl = \App\Http\Controllers\AdminController::class;
     Route::get('/dashboard', [$ctrl, 'dashboard'])->name('dashboard');
 
+    // ML Reports Dashboard (Admin)
+    Route::get('/ml-reports', [$ctrl, 'mlReports'])->name('ml-reports');
+    Route::post('/ml-reports/recalculate', [$ctrl, 'recalculateMLReports'])->name('ml_reports.recalculate');
+
     // Users
     Route::get('/users', [$ctrl, 'users'])->name('users.index');
     // Organizations
