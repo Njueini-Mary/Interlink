@@ -1,6 +1,8 @@
 <?php
 
+
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * OrganizationController manages organization listing, details, and related actions.
@@ -24,7 +26,7 @@ class OrganizationController extends Controller
     {
         $organizations = Organization::paginate();
         $categories = Category::all();
-        $opportunities = Opportunity::all();
+        $opportunities = Opportunity::with(['skills', 'organization'])->get();
         // Get top 6 categories with most opportunities
         $popularCategories = Category::withCount('opportunities')->orderByDesc('opportunities_count')->take(6)->get();
         foreach ($popularCategories as $cat) {
@@ -37,7 +39,9 @@ class OrganizationController extends Controller
             $organization->profile_link = route('organizations.show', $organization->id);
         }
 
-    return view('organizations.index', compact('categories', 'opportunities', 'organizations', 'popularCategories'));
+        // Do not precompute ML scores or XAI; only pass empty mlMatches for compatibility
+        $mlMatches = [];
+        return view('organizations.index', compact('categories', 'opportunities', 'organizations', 'popularCategories', 'mlMatches'));
     }
 
     /**
@@ -110,8 +114,8 @@ class OrganizationController extends Controller
             $organization = Organization::create($validated);
 
             // Associate the organization with the authenticated user if logged in
-            if (auth()->check()) {
-                $organization->user_id = auth()->id();
+            if (Auth::check()) {
+                $organization->user_id = Auth::id();
                 $organization->save();
             }
 
@@ -149,7 +153,7 @@ class OrganizationController extends Controller
         $organization = Organization::findOrFail($id);
         
         // Check authorization - only organization owner or admin can edit
-        $user = auth()->user();
+        $user = Auth::user();
         if ($user->role !== 'admin' && $organization->user_id !== $user->id) {
             abort(403, 'Unauthorized to edit this organization.');
         }
@@ -176,7 +180,7 @@ class OrganizationController extends Controller
         $organization = Organization::findOrFail($id);
         
         // Check authorization
-        $user = auth()->user();
+        $user = Auth::user();
         if ($user->role !== 'admin' && $organization->user_id !== $user->id) {
             abort(403, 'Unauthorized to update this organization.');
         }
@@ -243,7 +247,7 @@ class OrganizationController extends Controller
         $organization = Organization::findOrFail($id);
         
         // Check authorization
-        $user = auth()->user();
+        $user = Auth::user();
         if ($user->role !== 'admin' && $organization->user_id !== $user->id) {
             abort(403, 'Unauthorized to delete this organization.');
         }
@@ -288,7 +292,7 @@ class OrganizationController extends Controller
     public function mlStudents(Request $request)
     {
         // Get the authenticated user's organization
-        $user = auth()->user();
+        $user = Auth::user();
         $organization = $user->organizationProfile;
 
         if (!$organization) {

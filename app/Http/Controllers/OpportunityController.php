@@ -425,5 +425,54 @@ class OpportunityController extends Controller
         }
         return redirect()->back()->with('success', 'ML matches calculated!');
     }
+    /**
+     * On-demand ML scoring for a single opportunity and the logged-in student.
+     * Returns JSON with score and XAI explanation.
+     */
+    public function mlScore(Request $request, $id)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'student' || !$user->student) {
+            return response()->json(['success' => false, 'message' => 'Only students can calculate matches.'], 403);
+        }
+        $student = $user->student->load('skills');
+        $opportunity = Opportunity::with('skills')->findOrFail($id);
+        $studentSkills = $student->skills->pluck('name')->toArray();
+        $opportunitySkills = $opportunity->skills->pluck('name')->toArray();
+        $matcher = app(\App\Services\SkillMatcher::class);
+        $mlScores = $matcher->getMLScores(
+            implode(' ', $studentSkills) . ' ' . ($student->bio ?? ''),
+            implode(' ', $opportunitySkills) . ' ' . ($opportunity->description ?? '')
+        );
+        $matchedSkills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
+        $missingSkills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
+        $xai = $matcher->getMatchMessage(
+            $mlScores['tfidf'] ?? 0,
+            $matchedSkills,
+            $missingSkills,
+            $opportunitySkills,
+            $student->course ?? null,
+            $student->academic_field ?? null,
+            $student->gpa ?? null,
+            $student->interests ? (is_array($student->interests) ? $student->interests : explode(',', $student->interests)) : null,
+            $student->year ?? null,
+            $student->university ?? null,
+            null,
+            [
+                'skills' => ['matched' => $matchedSkills, 'missing' => $missingSkills],
+                'course' => ['matched' => [$student->course], 'missing' => []],
+                'academic_field' => ['matched' => [$student->academic_field], 'missing' => []],
+                'gpa' => ['matched' => [$student->gpa], 'missing' => []],
+                'interests' => ['matched' => is_array($student->interests) ? $student->interests : explode(',', $student->interests), 'missing' => []],
+            ]
+        );
+        return response()->json([
+            'success' => true,
+            'score' => $mlScores['tfidf'] ?? 0,
+            'xai' => $xai,
+            'matched_skills' => $matchedSkills,
+            'missing_skills' => $missingSkills,
+        ]);
+    }
 
 }

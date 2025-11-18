@@ -43,13 +43,17 @@ Route::get('/organizations', [OrganizationController::class, 'index'])->name('or
 Route::get('/organizations/{organization}', [OrganizationController::class, 'show'])->name('organizations.show');
 
 
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // User-facing application routes
     Route::get('/applications', [\App\Http\Controllers\ApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{id}', [\App\Http\Controllers\ApplicationController::class, 'show'])->name('applications.show');
     Route::post('/student/applications', [\App\Http\Controllers\ApplicationController::class, 'store'])->name('student.applications.store');
-        Route::post('/applications/{id}/calculate-match', [\App\Http\Controllers\ApplicationController::class, 'calculateMatch'])->name('applications.calculate_match');
+    Route::post('/applications/{id}/calculate-match', [\App\Http\Controllers\ApplicationController::class, 'calculateMatch'])->name('applications.calculate_match');
+
+    // On-demand ML scoring for a single opportunity
+    Route::post('/opportunities/{id}/ml-score', [\App\Http\Controllers\OpportunityController::class, 'mlScore'])->name('opportunities.ml_score');
 });
 
 
