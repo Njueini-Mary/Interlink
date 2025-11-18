@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Find Organizations & Opportunities</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -175,48 +176,16 @@
 
                     @auth
                         @if(auth()->user()->role === 'student' && auth()->user()->student)
-                            @php
-                                $student = auth()->user()->student;
-                                $studentSkills = $student->skills->pluck('name')->toArray();
-                                $opportunitySkills = $opportunity->skills->pluck('name')->toArray();
-                                $matcher = app(\App\Services\SkillMatcher::class);
-                                $mlScores = $matcher->getMLScores(
-                                    implode(' ', $studentSkills) . ' ' . ($student->bio ?? ''),
-                                    implode(' ', $opportunitySkills) . ' ' . ($opportunity->description ?? '')
-                                );
-                                $matchedSkills = $matcher->getMatchedSkills($opportunitySkills, $studentSkills);
-                                $missingSkills = $matcher->getMissingSkills($opportunitySkills, $studentSkills);
-                                $xai = $matcher->getMatchMessage(
-                                    $mlScores['tfidf'] ?? 0,
-                                    $matchedSkills,
-                                    $missingSkills,
-                                    $opportunitySkills,
-                                    $student->course ?? null,
-                                    $student->academic_field ?? null,
-                                    $student->gpa ?? null,
-                                    $student->interests ? (is_array($student->interests) ? $student->interests : explode(',', $student->interests)) : null,
-                                    $student->year ?? null,
-                                    $student->university ?? null,
-                                    null,
-                                    [
-                                        'skills' => ['matched' => $matchedSkills, 'missing' => $missingSkills],
-                                        'course' => ['matched' => [$student->course], 'missing' => []],
-                                        'academic_field' => ['matched' => [$student->academic_field], 'missing' => []],
-                                        'gpa' => ['matched' => [$student->gpa], 'missing' => []],
-                                        'interests' => ['matched' => is_array($student->interests) ? $student->interests : explode(',', $student->interests), 'missing' => []],
-                                    ]
-                                );
-                            @endphp
-                            <div class="mb-2">
-                                <span class="fw-bold text-primary">Your ML Match: {{ round($mlScores['tfidf'] ?? 0) }}%</span>
-                                <span class="text-muted small ms-2">(TFIDF)</span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="fw-bold text-gray-700">Why this score?</span>
-                                <div class="text-sm text-indigo-700 bg-indigo-50 rounded p-2 mt-1">{{ $xai }}</div>
+                            <div class="mb-2" id="ml-match-{{ $opportunity->id }}">
+                                <button class="btn btn-outline-primary btn-sm" onclick="showMLMatch('{{ $opportunity->id }}')" id="ml-btn-{{ $opportunity->id }}">
+                                    <i class="fas fa-magic me-1"></i> Show My Match
+                                </button>
+                                <div class="spinner-border spinner-border-sm text-primary ms-2 d-none" id="ml-spinner-{{ $opportunity->id }}" role="status" aria-hidden="true"></div>
+                                <div class="mt-2" id="ml-result-{{ $opportunity->id }}"></div>
                             </div>
                         @endif
                     @endauth
+
 
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <div>
@@ -372,7 +341,55 @@
 
     @include('layouts.footer')
 
+</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function showMLMatch(opportunityId) {
+        const btn = document.getElementById('ml-btn-' + opportunityId);
+        const spinner = document.getElementById('ml-spinner-' + opportunityId);
+        const resultDiv = document.getElementById('ml-result-' + opportunityId);
+        if (!btn || !spinner || !resultDiv) return;
+        btn.disabled = true;
+        spinner.classList.remove('d-none');
+        resultDiv.innerHTML = '';
+        fetch(`/opportunities/${opportunityId}/ml-score`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(async res => {
+            spinner.classList.add('d-none');
+            btn.disabled = false;
+            if (!res.ok) {
+                const text = await res.text();
+                resultDiv.innerHTML = `<div class='text-danger small'>Request failed: ${res.status} ${res.statusText}</div>`;
+                return;
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (!data) return;
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <div class='fw-bold text-primary'>Your ML Match: ${Math.round(data.score)}%</div>
+                    <div class='small text-muted'></div>
+                    <div class='mt-2 p-2 rounded-2 bg-white border small text-secondary'>${data.xai || ''}</div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<div class='text-danger small'>${data.message || 'Could not calculate match.'}</div>`;
+            }
+        })
+        .catch(err => {
+            spinner.classList.add('d-none');
+            btn.disabled = false;
+            resultDiv.innerHTML = `<div class='text-danger small'>An error occurred. Please try again later.</div>`;
+            console.error(err);
+        });
+    }
+    </script>
 </body>
 
 </html>
