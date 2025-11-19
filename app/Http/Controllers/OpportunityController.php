@@ -25,6 +25,16 @@ class OpportunityController extends Controller
     public function search(Request $request)
     {
         $query = Opportunity::query()->with('organization', 'category', 'skills');
+        $user = Auth::user();
+        // If organization, only show their own opportunities
+        if ($user && $user->role === 'organization') {
+            // Support both direct and pivoted org relationships
+            if ($user->organizationProfile) {
+                $query->where('organization_id', $user->organizationProfile->id);
+            } elseif ($user->organization_id) {
+                $query->where('organization_id', $user->organization_id);
+            }
+        }
         
         if ($request->filled('q')) {
             $q = $request->input('q');

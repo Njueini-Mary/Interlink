@@ -11,13 +11,17 @@
   @include('layouts.navbar')
 
   <div class="container mx-auto py-8">
-    <h1 class="text-3xl font-bold text-center mb-6">
-      {{ auth()->user()->role === 'organization' ? 'My Opportunity Listings' : 'All Opportunities' }}
+    <h1 class="text-3xl font-extrabold text-center mb-6 text-blue-800 tracking-tight">
+      @if(auth()->user()->role === 'organization')
+        <i class="fas fa-briefcase mr-2"></i> My Opportunity Listings
+      @else
+        <i class="fas fa-list mr-2"></i> All Opportunities
+      @endif
     </h1>
 
     <!-- Filters -->
-    <form method="GET" action="{{ route('opportunities.search') }}" class="bg-white p-4 rounded-lg shadow-md mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <form method="GET" action="{{ route('opportunities.search') }}" class="bg-white p-4 rounded-xl shadow-lg mb-6 border border-gray-200">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
           <select name="category" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200">
@@ -50,8 +54,8 @@
         @endif
         
         <div class="flex items-end">
-          <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600">
-            Apply Filters
+          <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded-lg shadow hover:from-blue-600 hover:to-blue-800 font-semibold transition-all">
+            <i class="fas fa-filter mr-2"></i>Apply Filters
           </button>
         </div>
       </div>
@@ -65,9 +69,9 @@
     @endif
     <!-- Opportunity Listings -->
     @if ($opportunities->count())
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         @foreach ($opportunities as $opportunity)
-      <div class="bg-white p-4 rounded-lg shadow-md {{ isset($opportunity->match_score) && $opportunity->match_score >= 60 ? 'border-l-4 border-purple-500' : '' }}">
+      <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-2xl transition {{ isset($opportunity->match_score) && $opportunity->match_score >= 60 ? 'border-l-4 border-purple-500' : '' }}">
       @if(isset($opportunity->match_score) && auth()->user()->role === 'student')
         <div class="mb-2">
           <span class="font-bold {{ $opportunity->match_score >= 80 ? 'text-green-600' : ($opportunity->match_score >= 60 ? 'text-blue-600' : ($opportunity->match_score >= 40 ? 'text-yellow-600' : 'text-red-600')) }}">
@@ -88,7 +92,9 @@
         </div>
       @endif
             <div class="flex justify-between items-start mb-2">
-              <h2 class="text-xl font-bold">{{ $opportunity->title }}</h2>
+              <h2 class="text-xl font-bold text-blue-700 flex items-center">
+                <i class="fas fa-rocket mr-2"></i>{{ $opportunity->title }}
+              </h2>
               @if(isset($opportunity->match_score) && auth()->user()->role === 'student')
                 <span class="text-xs font-bold px-2 py-1 rounded
                   @if($opportunity->match_score >= 80) bg-green-100 text-green-800
@@ -100,23 +106,30 @@
                 </span>
               @endif
             </div>
-            <p class="text-gray-700 mb-4">{{ \Illuminate\Support\Str::limit($opportunity->description, 150) }}</p>
-            <div class="text-sm text-gray-500 mb-4">
-              Type: <strong>{{ ucfirst($opportunity->type) }}</strong> |
-              Category: <strong>{{ $opportunity->category->name ?? 'N/A' }}</strong> |
-              Deadline: <strong>{{ \Carbon\Carbon::parse($opportunity->deadline)->toFormattedDateString() }}</strong>
+            <p class="text-gray-700 mb-4 italic">{{ \Illuminate\Support\Str::limit($opportunity->description, 150) }}</p>
+            <div class="text-sm text-gray-600 mb-4 flex flex-wrap gap-2">
+              <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                <i class="fas fa-briefcase mr-1"></i> {{ ucfirst($opportunity->type) }}
+              </span>
+              <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">
+                <i class="fas fa-layer-group mr-1"></i> {{ $opportunity->category->name ?? 'N/A' }}
+              </span>
+              <span class="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">
+                <i class="fas fa-calendar-alt mr-1"></i> {{ \Carbon\Carbon::parse($opportunity->deadline)->toFormattedDateString() }}
+              </span>
             </div>
-            <div class="flex justify-between">
-              @if (auth()->user()->role === 'organization' && auth()->user()->id === $opportunity->organization_id)
-                <a href="{{ route('admin.opportunities.edit', $opportunity->id) }}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600">Edit</a>
+            <div class="flex justify-between gap-2 mt-2">
+              @if (auth()->user()->role === 'organization' && isset($opportunity->organization_id) && (auth()->user()->organizationProfile && auth()->user()->organizationProfile->id === $opportunity->organization_id))
+                <a href="{{ route('admin.opportunities.edit', $opportunity->id) }}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 flex items-center"><i class="fas fa-edit mr-1"></i> Edit</a>
                 <form action="{{ route('admin.opportunities.destroy', $opportunity->id) }}" method="POST" class="inline">
                   @csrf
                   @method('DELETE')
+                  <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 flex items-center"><i class="fas fa-trash mr-1"></i> Delete</button>
                 </form>
               @elseif (auth()->user()->role === 'student')
-                <a href="{{ route('opportunities.show', $opportunity->id) }}" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600">View & Apply</a>
+                <a href="{{ route('opportunities.show', $opportunity->id) }}" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 flex items-center"><i class="fas fa-eye mr-1"></i> View & Apply</a>
               @else
-                <a href="{{ route('opportunities.show', $opportunity->id) }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600">View</a>
+                <a href="{{ route('opportunities.show', $opportunity->id) }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 flex items-center"><i class="fas fa-eye mr-1"></i> View</a>
               @endif
             </div>
           </div>

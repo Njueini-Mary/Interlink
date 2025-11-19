@@ -59,35 +59,39 @@
             </div>
         @endif
 
-        <section class="row">
-            <div class="col-lg-8 mx-auto">
-                <article class="card shadow-sm">
-                    <div class="card-body">
-                        <header class="mb-4">
-                            <h1 class="card-title text-center">{{ $opportunity->title }}</h1>
-                            <p class="card-subtitle text-muted text-center">
-                                <i class="fas fa-building me-1"></i> {{ $opportunity->organization->name }}
+        <section class="row justify-content-center">
+            <div class="col-lg-9">
+                <article class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                    <div class="card-body p-5">
+                        <header class="mb-4 text-center">
+                            <div class="d-flex flex-column align-items-center mb-3">
                                 <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.jpg') }}" 
                                      alt="{{ $opportunity->organization->name }}" 
-                                     class="rounded-circle mx-2" 
-                                     width="40" 
-                                     height="40">
-                                <span class="mx-2">•</span>
-                                <i class="fas fa-map-marker-alt me-1"></i> {{ $opportunity->organization->location ?? 'Remote' }}
-                            </p>
+                                     class="rounded-circle border border-3 border-primary shadow mb-2" 
+                                     width="70" height="70">
+                                <h1 class="card-title fw-bold mb-1">{{ $opportunity->title }}</h1>
+                                <div class="text-muted mb-1">
+                                    <i class="fas fa-building me-1"></i> {{ $opportunity->organization->name }}
+                                    <span class="mx-2">|</span>
+                                    <i class="fas fa-map-marker-alt me-1"></i> {{ $opportunity->organization->location ?? 'Remote' }}
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-info text-dark me-2"><i class="fas fa-briefcase me-1"></i>{{ ucfirst($opportunity->type) }}</span>
+                                    <span class="badge bg-success"><i class="fas fa-calendar-alt me-1"></i>Deadline: {{ \Carbon\Carbon::parse($opportunity->deadline)->toFormattedDateString() }}</span>
+                                </div>
+                            </div>
                         </header>
 
-                        <div class="text-center mb-4">
-                            <span class="badge bg-info">{{ ucfirst($opportunity->type) }}</span>
+                        <div class="mb-4">
+                            <h5 class="fw-bold"><i class="fas fa-align-left me-2"></i>Description</h5>
+                            <p class="card-text text-muted">{{ $opportunity->description }}</p>
                         </div>
 
-                        <p class="card-text">{{ $opportunity->description }}</p>
-
-                        <section class="mt-4">
-                            <h5>Skills Required:</h5>
+                        <section class="mb-4">
+                            <h5 class="fw-bold"><i class="fas fa-layer-group me-2"></i>Skills Required</h5>
                             <div class="d-flex flex-wrap">
                                 @foreach($opportunity->skills as $skill)
-                                    <span class="badge bg-secondary me-2 mb-2">{{ $skill->name }}</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary me-2 mb-2">{{ $skill->name }}</span>
                                 @endforeach
                             </div>
                         </section>
@@ -169,10 +173,10 @@
                             </section>
                         @endif
 
-                        <footer class="mt-4 text-muted">
-                            <div class="d-flex justify-content-between">
-                                <span><i class="fas fa-user me-1"></i> {{ $opportunity->applications_count ?? 0 }} applications received</span>
-                                <span>Posted {{ $opportunity->created_at->diffForHumans() }}</span>
+                        <footer class="mt-5 text-muted">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-user me-1"></i> <strong>{{ $opportunity->applications_count ?? 0 }}</strong> applications received</span>
+                                <span><i class="fas fa-clock me-1"></i> Posted {{ $opportunity->created_at->diffForHumans() }}</span>
                             </div>
                         </footer>
 
@@ -202,17 +206,22 @@
                                             <h5 class="modal-title" id="applyModalLabel">Apply for Opportunity</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <form action="{{ route('student.applications.store') }}" method="POST" id="applyForm">
+                                        <form action="{{ route('student.applications.store') }}" method="POST" id="applyForm" enctype="multipart/form-data">
                                             @csrf
                                             <div class="modal-body">
                                                 <input type="hidden" name="opportunity_id" value="{{ $opportunity->id }}">
                                                 <div class="mb-3">
-                                                    <label for="coverLetter" class="form-label">Cover Letter (optional)</label>
-                                                    <textarea class="form-control" id="coverLetter" name="cover_letter" rows="4" placeholder="Briefly explain why you are interested in this opportunity and how your skills match." >{{ auth()->user()->student->cover_letter ?? '' }}</textarea>
+                                                    <label for="skills" class="form-label">Skills (select all that apply)</label>
+                                                    <select class="form-select" id="skills" name="skills[]" multiple required>
+                                                        @foreach($opportunity->skills as $skill)
+                                                            <option value="{{ $skill->id }}" {{ auth()->user()->student->skills->pluck('id')->contains($skill->id) ? 'selected' : '' }}>{{ $skill->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="form-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple skills.</div>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="interest" class="form-label">Interests (comma separated)</label>
-                                                    <input type="text" class="form-control" id="interest" name="interest" value="{{ auth()->user()->student->interest ?? '' }}" placeholder="e.g. Software Development, Data Science, AI" required>
+                                                    <input type="text" class="form-control" id="interest" name="interest" value="{{ auth()->user()->student->interests ?? '' }}" placeholder="e.g. Software Development, Data Science, AI" required>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="gpa" class="form-label">Current GPA</label>
@@ -222,7 +231,7 @@
                                                     <label for="resume" class="form-label">Resume</label>
                                                     <input type="file" class="form-control" id="resume" name="resume" placeholder="Upload your resume in PDF format">
                                                     @if(auth()->user()->student && auth()->user()->student->resume)
-                                                        <div class="form-check">
+                                                        <div class="form-check mt-2">
                                                             <input class="form-check-input" type="checkbox" id="useExistingResume" name="use_existing_resume" value="1" checked>
                                                             <label class="form-check-label" for="useExistingResume">
                                                                 Use Existing Resume: <a href="{{ asset('storage/' . auth()->user()->student->resume) }}" target="_blank">View Resume</a>

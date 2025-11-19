@@ -86,7 +86,7 @@ class StudentController extends Controller
     public function show($id)
     {
     $student = Student::with('user')->findOrFail($id);
-    $applications = $student->applications()->with('opportunity')->get();
+    $applications = $student->applications()->with('opportunity')->paginate(10);
     return view('students.show', compact('student', 'applications'));
     }
 

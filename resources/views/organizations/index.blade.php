@@ -149,9 +149,9 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title mb-0">{{ $opportunity->title }}</h5>
-                        <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : asset('images/default-organization.jpg') }}" 
-                            alt="{{ $opportunity->organization->name }}" 
-                            class="rounded-circle" 
+                        <img src="{{ $opportunity->organization->logo ? asset('storage/' . $opportunity->organization->logo) : 'https://ui-avatars.com/api/?name=' . urlencode($opportunity->organization->name) . '&background=0D8ABC&color=fff&size=40' }}"
+                            alt="{{ $opportunity->organization->name }}"
+                            class="rounded-circle bg-light border border-2 border-secondary" 
                             width="40" 
                             height="40">
                     </div>
@@ -174,12 +174,19 @@
                         @endif
                     </div>
 
+
                     @auth
                         @if(auth()->user()->role === 'student' && auth()->user()->student)
-                            <div class="mb-2" id="ml-match-{{ $opportunity->id }}">
+                            @php
+                                $hasApplied = auth()->user()->student->applications->contains('opportunity_id', $opportunity->id);
+                            @endphp
+                            <div class="mb-2 d-flex align-items-center gap-2" id="ml-match-{{ $opportunity->id }}">
                                 <button class="btn btn-outline-primary btn-sm" onclick="showMLMatch('{{ $opportunity->id }}')" id="ml-btn-{{ $opportunity->id }}">
                                     <i class="fas fa-magic me-1"></i> Show My Match
                                 </button>
+                                @if($hasApplied)
+                                    <span class="badge bg-success ms-2"><i class="fas fa-check-circle me-1"></i>Applied</span>
+                                @endif
                                 <div class="spinner-border spinner-border-sm text-primary ms-2 d-none" id="ml-spinner-{{ $opportunity->id }}" role="status" aria-hidden="true"></div>
                                 <div class="mt-2" id="ml-result-{{ $opportunity->id }}"></div>
                             </div>

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\OrgApplicationsExport;
@@ -171,19 +172,25 @@ class ApplicationController extends Controller
         \Illuminate\Support\Facades\Log::info('All input fields: ', $request->all());
 
         try {
+            // Map 'interest' from the form to 'interests' for validation
+            $requestData = $request->all();
+            if (isset($requestData['interest'])) {
+                $requestData['interests'] = $requestData['interest'];
+            }
             // Adjust validation rules based on the use_existing_resume field
             $rules = [
                 'opportunity_id' => 'required|uuid|exists:opportunities,id',
-                'cover_letter' => 'required|string',
                 'skills' => 'required|array',
                 'skills.*' => 'uuid|exists:skills,id',
+                'interests' => 'required|string',
+                'gpa' => 'required|string',
             ];
 
             if ($request->input('use_existing_resume') !== '1') {
                 $rules['resume'] = 'required|file|mimes:pdf,doc,docx|max:2048';
             }
 
-            $validated = $request->validate($rules);
+            $validated = Validator::make($requestData, $rules)->validate();
             \Illuminate\Support\Facades\Log::info('Validated fields: ', $validated);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Illuminate\Support\Facades\Log::error('Validation error: ', $e->errors());
@@ -198,9 +205,8 @@ class ApplicationController extends Controller
         $application = new Application();
         $application->opportunity_id = $validated['opportunity_id'];
         $application->student_id = Auth::user()->student->id; // Associate the application with the logged-in student.
-        $application->cover_letter = $validated['cover_letter'];
-        $application->interests = $request->input('interest');
-        $application->gpa = $request->input('gpa');
+        $application->interests = $validated['interests'];
+        $application->gpa = $validated['gpa'];
 
         // Handle resume file upload if provided.
         if ($request->input('use_existing_resume') === '1') {
@@ -246,7 +252,7 @@ class ApplicationController extends Controller
     public function approve($id)
     {
         $application = Application::findOrFail($id);
-        $application->status = 'approved';
+        $application->status = 'accepted'; // Use valid enum value
         $application->save();
 
         return redirect()->route('applications.index')->with('success', 'Application approved successfully.');

@@ -23,6 +23,15 @@ class Student extends Model
     use HasFactory;
 
     /**
+     * Many-to-Many relationship with Category (categories this student belongs to).
+     */
+    public function categories()
+    {
+        return $this->belongsToMany(\App\Models\Category::class, 'student_category')->withTimestamps();
+    }
+    use HasFactory;
+
+    /**
      * Boot function to auto-generate UUID for id field on create.
      */
         protected static function boot()
